@@ -838,7 +838,7 @@ public class JuegoCliente {
                         + "|1|"
                         + this.player.getName()
                         + "|"
-                        + (this.player.getCurMap().getSubArea() != null ? this.player.getCurMap().getSubArea().getArea().getId() : "-1"));
+                        + (this.player.getCurMap().getSubArea() != null ? this.player.getCurMap().getSubArea().area.getId() : "-1"));
             else
                 this.player.send("PIEn" + packet);
 
@@ -852,13 +852,13 @@ public class JuegoCliente {
                         + "|1|"
                         + player.getName()
                         + "|"
-                        + (player.getCurMap().getSubArea() != null ? player.getCurMap().getSubArea().getArea().getId() : "-1"));
+                        + (player.getCurMap().getSubArea() != null ? player.getCurMap().getSubArea().area.getId() : "-1"));
             else if (player == this.player)
                 GestorSalida.GAME_SEND_BWK(this.player, this.player.getAccount().getPseudo()
                         + "|1|"
                         + this.player.getName()
                         + "|"
-                        + (this.player.getCurMap().getSubArea() != null ? this.player.getCurMap().getSubArea().getArea().getId() : "-1"));
+                        + (this.player.getCurMap().getSubArea() != null ? this.player.getCurMap().getSubArea().area.getId() : "-1"));
             else
                 GestorSalida.GAME_SEND_BWK(this.player, player.getAccount().getPseudo()
                         + "|1|" + player.getName() + "|-1");
@@ -934,7 +934,7 @@ public class JuegoCliente {
     public void requestBalance() {
         GestorSalida.SEND_Cb_BALANCE_CONQUETE(this.player, Mundo.mundo.getBalanceWorld(this.player.get_align())
                 + ";"
-                + Mundo.mundo.getBalanceArea(this.player.getCurMap().getSubArea().getArea(), this.player.get_align()));
+                + Mundo.mundo.getBalanceArea(this.player.getCurMap().getSubArea().area, this.player.get_align()));
     }
 
     public void getAlignedBonus() {
@@ -957,7 +957,7 @@ public class JuegoCliente {
     private void prismInfos(String packet) {
         if (packet.charAt(2) == 'J' || packet.charAt(2) == 'V') {
             if (packet.charAt(2) == 'J') {
-                Prisma prism = Mundo.mundo.getPrisme(this.player.getCurMap().getSubArea().getPrismId());
+                Prisma prism = Mundo.mundo.getPrisme(this.player.getCurMap().getSubArea().prismId);
                 if (prism != null) {
                     Prisma.parseAttack(this.player);
                     Prisma.parseDefense(this.player);
@@ -972,7 +972,7 @@ public class JuegoCliente {
             if (this.player.isInPrison())
                 return;
 
-            final int PrismeID = this.player.getCurMap().getSubArea().getPrismId();
+            final int PrismeID = this.player.getCurMap().getSubArea().prismId;
             Prisma prism = Mundo.mundo.getPrisme(PrismeID);
 
             if (prism == null)

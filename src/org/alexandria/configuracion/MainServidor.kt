@@ -71,7 +71,7 @@ object MainServidor {
                 Montura.updatable.update()
                 MundoJugadorOpciones.updatable.update()
                 MundoPublicidad.updatable.update()
-                GestorEvento.getInstance().update()
+                GestorEvento.instance.update()
 
                 if (runnables.isNotEmpty()) {
                     for (runnable in LinkedList(runnables)) {

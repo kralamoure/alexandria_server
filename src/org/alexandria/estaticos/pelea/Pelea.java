@@ -3467,14 +3467,14 @@ public class Pelea {
                             GestorSalida.GAME_SEND_am_ALIGN_PACKET_TO_SUBAREA(player, subarea.getId() + "|-1|0");
 
                             if (getPrism().getConquestArea() != -1) {
-                                GestorSalida.GAME_SEND_aM_ALIGN_PACKET_TO_AREA(player, subarea.getArea().getId() + "|-1");
-                                subarea.getArea().setPrismId(0);
-                                subarea.getArea().setAlignement(0);
+                                GestorSalida.GAME_SEND_aM_ALIGN_PACKET_TO_AREA(player, subarea.area.getId() + "|-1");
+                                subarea.area.prismId = 0;
+                                subarea.area.setAlignement(0);
                             }
                             GestorSalida.GAME_SEND_am_ALIGN_PACKET_TO_SUBAREA(player, subarea.getId() + "|0|1");
                         }
                         final int id = fighter.getPrism().getId();
-                        subarea.setPrismId(0);
+                        subarea.prismId = 0;
                         subarea.setAlignement(0);
                         this.getMapOld().RemoveNpc(id);
                         GestorSalida.GAME_SEND_ERASE_ON_MAP_TO_MAP(getMapOld(), id);

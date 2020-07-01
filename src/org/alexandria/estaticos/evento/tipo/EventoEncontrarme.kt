@@ -1,85 +1,53 @@
-package org.alexandria.estaticos.evento.tipo;
+package org.alexandria.estaticos.evento.tipo
 
-import org.alexandria.estaticos.cliente.Jugador;
-import org.alexandria.estaticos.Npc;
-import org.alexandria.estaticos.evento.GestorEvento;
-import org.alexandria.estaticos.evento.RecompensaEvento;
-import org.alexandria.estaticos.area.mapa.Mapa.GameCase;
+import org.alexandria.estaticos.area.mapa.Mapa.GameCase
+import org.alexandria.estaticos.cliente.Jugador
+import org.alexandria.estaticos.evento.GestorEvento
+import org.alexandria.estaticos.evento.RecompensaEvento
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.List;
-
-
-public class EventoEncontrarme extends Evento {
-
-    private final static List<FindMeRow> findMeRows = new ArrayList<>();
-
-    public EventoEncontrarme(byte id, byte maxPlayers, String name, String description, RecompensaEvento[] first) {
-        super(id, maxPlayers, name, description, first);
+class EventoEncontrarme(
+    id: Byte,
+    maxPlayers: Byte,
+    name: String?,
+    description: String?,
+    first: Array<RecompensaEvento>
+) : Evento(id, maxPlayers, name!!, description, first) {
+    override fun prepare() {
+        val animator = map!!.addNpc(16000, 221, 1)
     }
 
-    @Override
-    public void prepare() {
-        Npc animator = this.map.addNpc(16000, (short) 221, 1);
+    override fun perform() {}
+    override fun execute() {}
+    override fun close() {}
 
+    @Throws(Exception::class)
+    override fun onReceivePacket(manager: GestorEvento?, player: Jugador?, packet: String?): Boolean {
+        return false
     }
 
-    @Override
-    public void perform() {
-
+    override fun getEmptyCellForPlayer(player: Jugador?): GameCase? {
+        return null
     }
 
-    @Override
-    public void execute() {
+    override fun kickPlayer(player: Jugador?) {}
+    class FindMeRow(val map: Short, val cell: Short, private val indices: Array<String>) {
+        private var actual: Byte = 0
 
-    }
+        val nextIndice: String?
+            get() {
+                if (actual > this.indices.size - 1) return null
+                val indice = this.indices[actual.toInt()]
+                actual++
+                return indice
+            }
 
-    @Override
-    public void close() {
-
-    }
-
-    @Override
-    public boolean onReceivePacket(GestorEvento manager, Jugador player, String packet) throws Exception {
-        return false;
-    }
-
-    @Override
-    public GameCase getEmptyCellForPlayer(Jugador player) {
-        return null;
-    }
-
-    @Override
-    public void kickPlayer(Jugador player) {
-
-    }
-
-    public static class FindMeRow {
-        private final short map;
-        private final short cell;
-        private final String[] indices;
-        private byte actual = 0;
-
-        public FindMeRow(short map, short cell, String[] indices) {
-            this.map = map;
-            this.cell = cell;
-            this.indices = indices;
-            EventoEncontrarme.findMeRows.add(this);
+        init {
+            findMeRows.add(this)
         }
+    }
 
-        public short getMap() {
-            return map;
-        }
-
-        public short getCell() {
-            return cell;
-        }
-
-        public String getNextIndice() {
-            if(this.actual > this.indices.length - 1) return null;
-            String indice = this.indices[this.actual];
-            this.actual++;
-            return indice;
-        }
+    companion object {
+        private val findMeRows: MutableList<FindMeRow> = ArrayList()
     }
 }

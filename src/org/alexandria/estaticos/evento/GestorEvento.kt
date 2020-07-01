@@ -1,250 +1,245 @@
-package org.alexandria.estaticos.evento;
+package org.alexandria.estaticos.evento
 
-import org.alexandria.estaticos.cliente.Jugador;
-import org.alexandria.comunes.Formulas;
-import org.alexandria.comunes.GestorSalida;
-import org.alexandria.configuracion.Configuracion;
-import org.alexandria.comunes.gestorsql.Database;
-import org.alexandria.estaticos.evento.tipo.Evento;
-import org.alexandria.estaticos.juego.mundo.Mundo;
-import org.alexandria.estaticos.juego.planificador.Updatable;
-import org.alexandria.otro.utilidad.Temporizador;
+import org.alexandria.comunes.Formulas
+import org.alexandria.comunes.GestorSalida
+import org.alexandria.comunes.gestorsql.Database
+import org.alexandria.configuracion.Configuracion.AUTO_EVENT
+import org.alexandria.configuracion.Configuracion.TIME_PER_EVENT
+import org.alexandria.estaticos.cliente.Jugador
+import org.alexandria.estaticos.evento.tipo.Evento
+import org.alexandria.estaticos.juego.mundo.Mundo
+import org.alexandria.estaticos.juego.planificador.Updatable
+import org.alexandria.otro.utilidad.Temporizador
+import org.alexandria.otro.utilidad.Temporizador.Companion.addSiguiente
+import java.time.Instant
+import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.function.Consumer
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
-
-public class GestorEvento extends Updatable {
-
-    public final static int TOKEN = 50007, NPC = 16000;
-    private final static GestorEvento singleton = new GestorEvento(Database.dinamicos.getEventData().load());
-
-    public static GestorEvento getInstance() {
-        return singleton;
-    }
-
-    public enum State {
+class GestorEvento private constructor(private val events: Array<Evento?>) : Updatable(60000) {
+    enum class State {
         WAITING, INITIALIZE, PROCESSED, STARTED, FINISHED
     }
 
-    private final Evento[] events;
-    private State state = State.WAITING;
-    private Evento current, lastest;
-    private short count = 0;
-    private final List<Jugador> participants = new ArrayList<>();
+    var state =
+        State.WAITING
+        private set
+    var currentEvent: Evento? = null
+        private set
+    private var lastest: Evento? = null
+    private var count: Short = 0
+    private val participants: MutableList<Jugador> = ArrayList()
 
-    private GestorEvento(Evento[] events) {
-        super(60000);
-        this.events = events;
+    fun getParticipants(): MutableList<Jugador> {
+        return participants
     }
 
-    public State getState() {
-        return state;
-    }
-
-    public Evento getCurrentEvent() {
-        return current;
-    }
-
-    public List<Jugador> getParticipants() {
-        return participants;
-    }
-
-    public void startNewEvent() {
-        Evento event = this.events[Formulas.random.nextInt(this.events.length)];
-
-        if(event != null) {
-            if(this.events.length > 1 && this.lastest != null && event.getEventId() == this.lastest.getEventId()) {
-                this.startNewEvent();
-                return;
+    private fun startNewEvent() {
+        val event = events[Formulas.random.nextInt(events.size)]
+        if (event != null) {
+            if (events.size > 1 && lastest != null && event.eventId == lastest!!.eventId) {
+                startNewEvent()
+                return
             }
-
-            event.prepare();
-            this.lastTime = Instant.now().toEpochMilli();
-            this.current = event;
-            this.state = State.PROCESSED;
-           //Mundo.mundo.sendMessageToAll("(<b>Infos</b>) : L'événement '<b>" + event.getEventName() + "</b>' vient de démarrer, <b>.event</b> pour vous inscrire.");
+            event.prepare()
+            lastTime = Instant.now().toEpochMilli()
+            currentEvent = event
+            state = State.PROCESSED
+            //Mundo.mundo.sendMessageToAll("(<b>Infos</b>) : L'événement '<b>" + event.getEventName() + "</b>' vient de démarrer, <b>.event</b> pour vous inscrire.");
         } else {
-            this.startNewEvent();
+            startNewEvent()
         }
     }
 
-    private synchronized void startCurrentEvent() {
-        if(this.state == State.STARTED)
-            return;
-        this.state = State.STARTED;
-
-        if(!this.hasEnoughPlayers()) {
-            this.count = 0;
-            this.lastTime = Instant.now().toEpochMilli();
-            this.state = State.PROCESSED;
-        } else if(this.moveAllPlayersToEventMap(true)) {
-            this.lastTime = Instant.now().toEpochMilli();
-            Temporizador.addSiguiente(() -> this.current.perform(), 0, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+    @Synchronized
+    private fun startCurrentEvent() {
+        if (state == State.STARTED) return
+        state = State.STARTED
+        if (!hasEnoughPlayers()) {
+            count = 0
+            lastTime = Instant.now().toEpochMilli()
+            state = State.PROCESSED
+        } else if (moveAllPlayersToEventMap(true)) {
+            lastTime = Instant.now().toEpochMilli()
+            addSiguiente(
+                Runnable { currentEvent!!.perform() },
+                0,
+                TimeUnit.SECONDS,
+                Temporizador.DataType.CLIENTE
+            )
         }
     }
 
-    public void finishCurrentEvent() {
-        this.participants.stream().filter(Objects::nonNull).forEach(player -> {
-            player.teleportOldMap();
-            player.setBlockMovement(false);
-        });
-
-        this.current.interrupt();
-        this.lastest = this.current;
-        this.current = null;
-        this.lastTime = Instant.now().toEpochMilli();
-        this.count = 0;
-        this.state = State.WAITING;
+    fun finishCurrentEvent() {
+        participants.stream()
+            .filter { obj: Jugador? -> Objects.nonNull(obj) }.forEach { player: Jugador ->
+                player.teleportOldMap()
+                player.blockMovement = false
+            }
+        currentEvent!!.interrupt()
+        lastest = currentEvent
+        currentEvent = null
+        lastTime = Instant.now().toEpochMilli()
+        count = 0
+        state = State.WAITING
     }
 
-    public synchronized byte subscribe(final Jugador player) {
-        if(this.current == null || this.state == State.WAITING) {
-            return 0;
+    @Synchronized
+    fun subscribe(player: Jugador): Byte {
+        if (currentEvent == null || state == State.WAITING) {
+            return 0
         } else {
-            if(this.state == State.PROCESSED) {
-                for (Jugador p : this.getParticipants()) {
-                    if (player.getAccount() != null && p != null && p.getAccount() != null) {
-                        if (player.getAccount().getCurrentIp().compareTo(p.getAccount().getCurrentIp()) == 0) {
-                            GestorSalida.GAME_SEND_MESSAGE(player, "Impossible de rejoindre ce combat, vous êtes déjà dans le combat avec une même IP !");
-                            return 1;
+            if (state == State.PROCESSED) {
+                for (p in getParticipants()) {
+                    if (player.account != null && p != null && p.account != null) {
+                        if (player.account.currentIp.compareTo(p.account.currentIp) == 0) {
+                            GestorSalida.GAME_SEND_MESSAGE(
+                                player,
+                                "Impossible de rejoindre ce combat, vous êtes déjà dans le combat avec une même IP !"
+                            )
+                            return 1
                         }
                     }
                 }
-                if (this.participants.size() >= this.current.getMaxPlayers()) {
-                    player.sendMessage("(<b>Infos</b>) : L'événement '<b>" + this.current.getEventName() + "</b>' est déjà au complet.");
-                } else if (this.participants.contains(player)) {
-                    this.participants.remove(player);
-                    player.sendMessage("(<b>Infos</b>) : Vous venez de vous désinscrire de l'événement '<b>" + this.current.getEventName() + "</b>'.");
-                } else if (this.hasSameIP(player)) {
-                    player.sendMessage("(<b>Infos</b>) : Vous avez déjà un membre de votre réseaux internet en jeu sur l'événement.");
-                } else if (player.getParty() != null && player.getParty().getMaster() != null) {
-                    player.sendMessage("(<b>Infos</b>) : Vous ne pouvez pas rejoindre un événement en étant en mode maître.");
+                if (participants.size >= currentEvent!!.maxPlayers) {
+                    player.sendMessage("(<b>Infos</b>) : L'événement '<b>" + currentEvent!!.eventName + "</b>' est déjà au complet.")
+                } else if (participants.contains(player)) {
+                    participants.remove(player)
+                    player.sendMessage("(<b>Infos</b>) : Vous venez de vous désinscrire de l'événement '<b>" + currentEvent!!.eventName + "</b>'.")
+                } else if (hasSameIP(player)) {
+                    player.sendMessage("(<b>Infos</b>) : Vous avez déjà un membre de votre réseaux internet en jeu sur l'événement.")
+                } else if (player.party != null && player.party.master != null) {
+                    player.sendMessage("(<b>Infos</b>) : Vous ne pouvez pas rejoindre un événement en étant en mode maître.")
                 } else {
-                    this.participants.add(player);
-                    player.sendMessage("(<b>Infos</b>) : Vous venez de vous inscrire à l'événement '<b>" + this.current.getEventName() + "</b>'.");
-
-                    if (this.participants.size() >= this.current.getMaxPlayers()) {
-                        this.startCurrentEvent();
+                    participants.add(player)
+                    player.sendMessage("(<b>Infos</b>) : Vous venez de vous inscrire à l'événement '<b>" + currentEvent!!.eventName + "</b>'.")
+                    if (participants.size >= currentEvent!!.maxPlayers) {
+                        startCurrentEvent()
                     } else {
-                        this.participants.forEach(target -> target.sendMessage("(<b>Infos</b>) : En attente de " +
-                                (this.current.getMaxPlayers() - this.participants.size()) + " joueur(s)."));
+                        participants.forEach(Consumer { target: Jugador ->
+                            target.sendMessage(
+                                "(<b>Infos</b>) : En attente de " +
+                                        (currentEvent!!.maxPlayers - participants.size) + " joueur(s)."
+                            )
+                        })
                     }
                 }
             } else {
-                player.sendMessage("(<b>Infos</b>) : L'événement '<b>" + this.current.getEventName() + "</b>' a déjà démarrer.");
+                player.sendMessage("(<b>Infos</b>) : L'événement '<b>" + currentEvent!!.eventName + "</b>' a déjà démarrer.")
             }
         }
-        return 1;
+        return 1
     }
 
-    private boolean hasSameIP(Jugador player) {
-        if(player != null && player.getAccount() != null) {
-            final String ip = player.getAccount().getCurrentIp();
-
-            if(ip.equals("127.0.0.1"))
-                return false;
-            for (Jugador target : this.participants) {
-                if (target != null && target.getAccount() != null) {
-                    return ip.equals(target.getAccount().getCurrentIp());
+    private fun hasSameIP(player: Jugador?): Boolean {
+        if (player != null && player.account != null) {
+            val ip = player.account.currentIp
+            if (ip == "127.0.0.1") return false
+            for (target in participants) {
+                if (target != null && target.account != null) {
+                    return ip == target.account.currentIp
                 }
-
             }
         }
-        return false;
+        return false
     }
 
-    private boolean hasEnoughPlayers() {
-        if(this.current == null)
-            return false;
-        short percent = (short) ((100 * this.participants.size()) / this.current.getMaxPlayers());
-        return percent >= 30;
+    private fun hasEnoughPlayers(): Boolean {
+        if (currentEvent == null) return false
+        val percent = (100 * participants.size / currentEvent!!.maxPlayers).toShort()
+        return percent >= 30
     }
 
-    @Override
-    public void update() {
-        if(Configuracion.INSTANCE.getAUTO_EVENT() && this.verify()) {
-            if (this.state == State.WAITING) {
-                short result = (short) (Configuracion.INSTANCE.getTIME_PER_EVENT() - (++count));
-                if (result == 0) {
-                    this.count = 0;
-                    this.lastTime = Instant.now().toEpochMilli();
-                    this.state = State.INITIALIZE;
-                    Temporizador.addSiguiente(this::startNewEvent, 0, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
-                } else if (result == 60 || result == 30 || result == 15 || result == 5) {
+    override fun update() {
+        if (AUTO_EVENT && verify()) {
+            if (state == State.WAITING) {
+                val result = (TIME_PER_EVENT - ++count).toShort()
+                if (result.toInt() == 0) {
+                    count = 0
+                    lastTime = Instant.now().toEpochMilli()
+                    state = State.INITIALIZE
+                    addSiguiente(
+                        Runnable { startNewEvent() },
+                        0,
+                        TimeUnit.SECONDS,
+                        Temporizador.DataType.CLIENTE
+                    )
+                } else if (result.toInt() == 60 || result.toInt() == 30 || result.toInt() == 15 || result.toInt() == 5) {
                     //Mundo.world.sendMessageToAll("(<b>Infos</b>) : Un <b>événement</b> va démarrer dans " + result + " minutes.");
                 }
-            } else if (this.state == State.PROCESSED) {
-                short result = (short) ((this.hasEnoughPlayers() ? 5 : 10) - (++count));
-                this.moveAllPlayersToEventMap(false);
-
+            } else if (state == State.PROCESSED) {
+                val result = ((if (hasEnoughPlayers()) 5 else 10) - ++count).toShort()
+                moveAllPlayersToEventMap(false)
                 if (result <= 0) {
-                    this.startCurrentEvent();
-                } else if(result == 1 && this.hasEnoughPlayers()) {
-                    for(Jugador player : this.participants) {
-                        player.sendMessage("(<b>Infos</b>) : L'événement va commencer dans 1 minute.");
+                    startCurrentEvent()
+                } else if (result.toInt() == 1 && hasEnoughPlayers()) {
+                    for (player in participants) {
+                        player.sendMessage("(<b>Infos</b>) : L'événement va commencer dans 1 minute.")
                     }
                 }
             }
         }
     }
 
-    @Override
-    public Object get() {
-        return lastTime;
+    override fun get(): Any? {
+        return lastTime
     }
 
-    private boolean moveAllPlayersToEventMap(boolean teleport) {
-        boolean ok = true;
-        final StringBuilder afk = teleport ? new StringBuilder("") : null;
-
-        for(final Jugador player : this.participants) {
-            if(player.getPelea() != null || !player.isOnline() || player.isGhost() || player.getDoAction()) {
-                ok = false;
-                this.participants.remove(player);
-                player.sendMessage("La prochaine fois tâchez d'être disponible !");
-                player.sendMessage("(<b>Infos</b>) : Vous venez d'être expulsé du jeu pour indisponibilité.");
-
-                if(teleport) {
-                    afk.append(afk.length() == 0 ? ("<b>" + player.getName() + "</b>") : (", <b>" + player.getName() + "</b>"));
+    private fun moveAllPlayersToEventMap(teleport: Boolean): Boolean {
+        var ok = true
+        val afk = if (teleport) StringBuilder("") else null
+        for (player in participants) {
+            if (player.pelea != null || !player.isOnline || player.isGhost || player.doAction) {
+                ok = false
+                participants.remove(player)
+                player.sendMessage("La prochaine fois tâchez d'être disponible !")
+                player.sendMessage("(<b>Infos</b>) : Vous venez d'être expulsé du jeu pour indisponibilité.")
+                if (teleport) {
+                    afk!!.append(if (afk.isEmpty()) "<b>" + player.name + "</b>" else ", <b>" + player.name + "</b>")
                 }
             }
         }
-
-        if(!ok || !teleport) {
-            if(teleport) {
-                this.participants.forEach(player -> player.sendMessage("(<b>Infos</b> : Merci à " + afk.toString() + " expulsé pour inactivité."));
-                Mundo.mundo.getOnlinePlayers().stream().filter(target -> !afk.toString().contains(target.getName()))
-                        .forEach(target -> target.sendMessage("(<b>Infos</b> : Il vous reste 30 secondes pour vous inscrire à l'événement '<b>" + this.current.getEventName() + "</b>' (<b>.event</b>)."));
+        if (!ok || !teleport) {
+            if (teleport) {
+                participants.forEach(Consumer { player: Jugador -> player.sendMessage("(<b>Infos</b> : Merci à " + afk.toString() + " expulsé pour inactivité.") })
+                Mundo.mundo.onlinePlayers.stream()
+                    .filter { target: Jugador ->
+                        !afk.toString().contains(target.name)
+                    }
+                    .forEach { target: Jugador -> target.sendMessage("(<b>Infos</b> : Il vous reste 30 secondes pour vous inscrire à l'événement '<b>" + currentEvent!!.eventName + "</b>' (<b>.event</b>).") }
             }
-            return false;
+            return false
         }
-
-        for(final Jugador player : this.participants) {
-            if(player.getPelea() == null && player.isOnline() && !player.isGhost() && !player.getDoAction()) {
-                player.setOldPosition();
-                player.setBlockMovement(true);
-                player.teleport(this.current.getMap().getId(), this.current.getEmptyCellForPlayer(player).getId());
-                GestorSalida.GAME_SEND_eD_PACKET_TO_MAP(this.current.getMap(), player.getId(), 4);
+        for (player in participants) {
+            if (player.pelea == null && player.isOnline && !player.isGhost && !player.doAction) {
+                player.setOldPosition()
+                player.blockMovement = true
+                player.teleport(currentEvent!!.map!!.id, currentEvent!!.getEmptyCellForPlayer(player).id)
+                GestorSalida.GAME_SEND_eD_PACKET_TO_MAP(currentEvent!!.map, player.id, 4)
             } else {
-                ok = false;
-                this.participants.remove(player);
-                player.sendMessage("La prochaine fois tâchez d'être disponible !");
-                player.sendMessage("(<b>Infos</b>) : Vous venez d'être expulsé du jeu pour indisponibilité.");
+                ok = false
+                participants.remove(player)
+                player.sendMessage("La prochaine fois tâchez d'être disponible !")
+                player.sendMessage("(<b>Infos</b>) : Vous venez d'être expulsé du jeu pour indisponibilité.")
             }
         }
-
-        return ok;
+        return ok
     }
 
-    public static boolean isInEvent(Jugador player) {
-        if(Configuracion.INSTANCE.getAUTO_EVENT() && GestorEvento.getInstance().getState() == State.STARTED)
-            for(Jugador target : GestorEvento.getInstance().getParticipants())
-                if(target.getId() == player.getId())
-                    return true;
-        return false;
+    companion object {
+        const val TOKEN = 50007
+        const val NPC = 16000
+        @JvmStatic
+        val instance = GestorEvento(Database.dinamicos.eventData!!.load())
+
+        @JvmStatic
+        fun isInEvent(player: Jugador): Boolean {
+            if (AUTO_EVENT && instance
+                    .state == State.STARTED
+            ) for (target in instance
+                .getParticipants()) if (target.id == player.id) return true
+            return false
+        }
     }
+
 }

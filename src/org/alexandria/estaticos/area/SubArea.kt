@@ -1,69 +1,37 @@
-package org.alexandria.estaticos.area;
+package org.alexandria.estaticos.area
 
-import org.alexandria.estaticos.area.mapa.Mapa;
-import org.alexandria.estaticos.juego.mundo.Mundo;
+import org.alexandria.estaticos.area.mapa.Mapa
+import org.alexandria.estaticos.juego.mundo.Mundo
+import java.util.*
 
-import java.util.ArrayList;
+class SubArea(val id: Int, area: Int) {
+    @JvmField
+    val area: Area = Mundo.mundo.getArea(area)
+    var alignement = 0
+        set(alignement) {
+            if (this.alignement == 1 && alignement == -1) bontarians-- else if (this.alignement == 2 && alignement == -1) brakmarians-- else if (this.alignement == -1 && alignement == 1) bontarians++ else if (this.alignement == -1 && alignement == 2) brakmarians++
+            field = alignement
+        }
+    @JvmField
+    var prismId = 0
+    var conquistable = false
+        private set
+    @JvmField
+    val maps = ArrayList<Mapa>()
 
-public class SubArea {
-    public static int bontarians = 0, brakmarians = 0;
-
-    private final int id;
-    private final Area area;
-    private int alignement, prismId;
-    private boolean conquistable;
-    private final ArrayList<Mapa> maps = new ArrayList<>();
-
-    public SubArea(int id, int area) {
-        this.id = id;
-        this.area = Mundo.mundo.getArea(area);
+    fun setConquistable(conquistable: Int) {
+        this.conquistable = conquistable == 0
     }
 
-    public int getId() {
-        return id;
+    fun addMap(Map: Mapa) {
+        maps.add(Map)
     }
 
-    public Area getArea() {
-        return area;
+    companion object {
+        @JvmField
+        var bontarians = 0
+        @JvmField
+        var brakmarians = 0
     }
 
-    public int getAlignement() {
-        return alignement;
-    }
-
-    public void setAlignement(int alignement) {
-        if (this.alignement == 1 && alignement == -1)
-            bontarians--;
-        else if (this.alignement == 2 && alignement == -1)
-            brakmarians--;
-        else if (this.alignement == -1 && alignement == 1)
-            bontarians++;
-        else if (this.alignement == -1 && alignement == 2)
-            brakmarians++;
-        this.alignement = alignement;
-    }
-
-    public int getPrismId() {
-        return prismId;
-    }
-
-    public void setPrismId(int prism) {
-        this.prismId = prism;
-    }
-
-    public boolean getConquistable() {
-        return conquistable;
-    }
-
-    public void setConquistable(int conquistable) {
-        this.conquistable = conquistable == 0;
-    }
-
-    public ArrayList<Mapa> getMaps() {
-        return maps;
-    }
-
-    public void addMap(Mapa Map) {
-        this.maps.add(Map);
-    }
 }

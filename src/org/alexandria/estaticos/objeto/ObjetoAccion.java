@@ -514,7 +514,7 @@ public class ObjetoAccion {
                         map0 = player.getCurMap();
                         int cellId1 = player.getCurCell().getId();
                         SubArea subArea = map0.getSubArea();
-                        Area area = subArea.getArea();
+                        Area area = subArea.area;
                         int alignement = player.get_align();
                         if (cellId1 <= 0)
                             return;
@@ -536,7 +536,7 @@ public class ObjetoAccion {
                         }
                         Prisma Prisme = new Prisma(Mundo.mundo.getNextIDPrisme(), alignement, 1, map0.getId(), cellId1, player.get_honor(), -1);
                         subArea.setAlignement(alignement);
-                        subArea.setPrismId(Prisme.getId());
+                        subArea.prismId = Prisme.getId();
                         for (Jugador z : Mundo.mundo.getOnlinePlayers()) {
                             if (z == null)
                                 continue;
@@ -553,7 +553,7 @@ public class ObjetoAccion {
                                         + "|" + alignement);
                         }
                         if (area.getAlignement() == 0) {
-                            area.setPrismId(Prisme.getId());
+                            area.prismId = Prisme.getId();
                             area.setAlignement(alignement);
                             Prisme.setConquestArea(area.getId());
                         }

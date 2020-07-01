@@ -255,15 +255,15 @@ public class Gremio {
             if (str.length() != 0)
                 str.append("|");
             str.append(GM.getPlayerId()).append(";");
-            str.append(GM.getName()).append(";");
-            str.append(GM.getLvl()).append(";");
-            str.append(GM.getGfx()).append(";");
+            str.append(GM.getPlayer().getName()).append(";");
+            str.append(GM.getPlayer().getLevel()).append(";");
+            str.append(GM.getPlayer().getGfxId()).append(";");
             str.append(GM.getRank()).append(";");
             str.append(GM.getXpGave()).append(";");
             str.append(GM.getXpGive()).append(";");
             str.append(GM.getRights()).append(";");
             str.append(online).append(";");
-            str.append(GM.getAlign()).append(";");
+            str.append(GM.getPlayer().get_align()).append(";");
             str.append(GM.getHoursFromLastCo());
         }
         return str.toString();
@@ -295,22 +295,6 @@ public class Gremio {
 
         public int getPlayerId() {
             return player.getId();
-        }
-
-        public String getName() {
-            return player.getName();
-        }
-
-        public int getAlign() {
-            return player.get_align();
-        }
-
-        public int getGfx() {
-            return player.getGfxId();
-        }
-
-        public int getLvl() {
-            return player.getLevel();
         }
 
         public Gremio getGuild() {
@@ -371,8 +355,6 @@ public class Gremio {
 
             Database.estaticos.getGuildMemberData().update(perso);
         }
-
-
 
         private void initRights() {
             for(int right : Constantes.G_RIGHTS) {

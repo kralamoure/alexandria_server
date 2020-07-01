@@ -5,11 +5,24 @@ import org.alexandria.estaticos.pelea.Peleador;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 public abstract class InteligenciaAbstracta implements Inteligencia {
 
-    private final ScheduledExecutorService executor;
+    int delay = 1000;
+
+    static class DaemonFactory implements ThreadFactory {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    }
+
+    ThreadFactory tf = new DaemonFactory();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(tf);
 
     protected Pelea fight;
     protected Peleador fighter;
@@ -20,11 +33,12 @@ public abstract class InteligenciaAbstracta implements Inteligencia {
         this.fight = fight;
         this.fighter = fighter;
         this.count = count;
-        this.executor = Executors.newSingleThreadScheduledExecutor( r -> {
-            Thread thread = new Thread(r);
+        this.executor.schedule(() -> {
+            Thread thread = new Thread();
             thread.setName(InteligenciaAbstracta.class.getName());
+            thread.setDaemon(true);
             return thread;
-        });
+        }, delay, TimeUnit.MILLISECONDS);
     }
 
     public Pelea getFight() {
@@ -46,10 +60,12 @@ public abstract class InteligenciaAbstracta implements Inteligencia {
     public void endTurn() {
         if (this.stop && !this.fighter.isDead()) {
             if (this.fighter.haveInvocation()) {
-                this.addNext(() -> {
+                /*this.addNext(() -> {
                     this.fight.endTurn(false, this.fighter);
                     this.executor.shutdownNow();
-                }, 1000);
+                }, 1000);*/
+                this.fight.endTurn(false, this.fighter);
+                this.executor.shutdownNow();
             } else {
                 this.fight.endTurn(false,this.fighter);
                 this.executor.shutdownNow();
@@ -67,5 +83,7 @@ public abstract class InteligenciaAbstracta implements Inteligencia {
         this.apply();
     }
 
-    public void addNext(Runnable runnable, Integer time) { executor.schedule(runnable,time,TimeUnit.MILLISECONDS); }
+    public void addNext(Runnable runnable, Integer time) {
+        executor.schedule(runnable,time,TimeUnit.MILLISECONDS);
+    }
 }

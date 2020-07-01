@@ -69,20 +69,14 @@ class DatosMiembrosGremio(dataSource: HikariDataSource?) :
     fun update(player: Jugador) {
         var p: PreparedStatement? = null
         try {
-            p = getPreparedStatement("REPLACE INTO `guild_members` VALUES(?,?,?,?,?,?,?,?,?,?)")
+            p = getPreparedStatement("REPLACE INTO `guild_members` VALUES(?,?,?,?,?,?)")
             val gm = player.guildMember ?: return
             p!!.setInt(1, gm.playerId)
             p.setInt(2, gm.guild.id)
-            p.setString(3, player.name)
-            p.setInt(4, gm.lvl)
-            var gfx = gm.gfx
-            if (gfx > 121 || gfx < 10) gfx = player.classe * 10 + player.sexe
-            p.setInt(5, gfx)
-            p.setInt(6, gm.rank)
-            p.setLong(7, gm.xpGave)
-            p.setInt(8, gm.xpGive)
-            p.setInt(9, gm.rights)
-            p.setInt(10, gm.align)
+            p.setInt(3, gm.rank)
+            p.setLong(4, gm.xpGave)
+            p.setInt(5, gm.xpGive)
+            p.setInt(6, gm.rights)
             execute(p)
         } catch (e: SQLException) {
             super.sendError("Guild_memberData update", e)

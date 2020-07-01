@@ -1,74 +1,54 @@
-package org.alexandria.estaticos.comandos.administracion;
+package org.alexandria.estaticos.comandos.administracion
 
-import org.alexandria.comunes.gestorsql.Database;
+import org.alexandria.comunes.gestorsql.Database
+import org.alexandria.estaticos.comandos.administracion.Comandos.Companion.getComandobyID
+import java.util.*
 
-import java.util.ArrayList;
-import java.util.List;
+class GrupoADM(val id: Int, val nombre: String, val isJugador: Boolean, comandos: String) {
+    private var comandos: MutableList<Comandos?> = ArrayList()
 
-public class GrupoADM {
+    fun getComandos(): List<Comandos?> {
+        return comandos
+    }
 
-    private final static List<GrupoADM> grupo = new ArrayList<>();
+    fun haveCommand(name: String?): Boolean {
+        for (command in comandos) if (command!!.argumento[0]
+                .equals(name, ignoreCase = true)
+        ) return true
+        return false
+    }
 
-    private final int id;
-    private final String nombre;
-    private final boolean isJugador;
-    private List<Comandos> comandos = new ArrayList<>();
-
-    public GrupoADM(int id, String nombre, boolean isJugador, String comandos) {
-        this.id = id;
-        this.nombre = nombre;
-        this.isJugador = isJugador;
-
-        if (comandos.equalsIgnoreCase("all")) {
-            this.comandos = Comandos.comandos;
-        } else {
-            if (comandos.contains(",")) {
-                for (String str : comandos.split(","))
-                    this.comandos.add(Comandos.getComandobyID(Integer.parseInt(str)));
-            } else {
-                this.comandos.add(Comandos.getComandobyID(Integer.parseInt(comandos)));
-            }
+    companion object {
+        private val grupo: MutableList<GrupoADM> = ArrayList()
+        @JvmStatic
+        fun reload() {
+            grupo.clear()
+            Database.dinamicos.groupData!!.load(null)
         }
 
-        GrupoADM.grupo.add(this);
+        @JvmStatic
+        fun getGrupoID(id: Int): GrupoADM? {
+            for (group in grupo) if (group.id == id) return group
+            return null
+        }
+
+        @JvmStatic
+        fun getGrupo(): List<GrupoADM> {
+            return grupo
+        }
     }
 
-    public int getId() {
-        return this.id;
-    }
-
-    public String getNombre() {
-        return this.nombre;
-    }
-
-    public boolean isJugador() {
-        return isJugador;
-    }
-
-    public List<Comandos> getComandos() {
-        return comandos;
-    }
-
-    public boolean haveCommand(String name) {
-        for (Comandos command : this.comandos)
-            if (command.getArgumento()[0].equalsIgnoreCase(name))
-                return true;
-        return false;
-    }
-
-    public static void reload() {
-        GrupoADM.grupo.clear();
-        Database.dinamicos.getGroupData().load(null);
-    }
-
-    public static GrupoADM getGrupoID(int id) {
-        for(GrupoADM group : GrupoADM.grupo)
-            if(group.id == id)
-                return group;
-        return null;
-    }
-
-    public static List<GrupoADM> getGrupo() {
-        return grupo;
+    init {
+        if (comandos.equals("all", ignoreCase = true)) {
+            this.comandos = Comandos.comandos.toMutableList()
+        } else {
+            if (comandos.contains(",")) {
+                for (str in comandos.split(",".toRegex())
+                    .toTypedArray()) this.comandos.add(getComandobyID(str.toInt()))
+            } else {
+                this.comandos.add(getComandobyID(comandos.toInt()))
+            }
+        }
+        grupo.add(this)
     }
 }

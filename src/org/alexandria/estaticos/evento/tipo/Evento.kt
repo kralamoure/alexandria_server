@@ -1,80 +1,68 @@
-package org.alexandria.estaticos.evento.tipo;
+package org.alexandria.estaticos.evento.tipo
 
-import org.alexandria.estaticos.area.mapa.Mapa;
-import org.alexandria.estaticos.cliente.Jugador;
-import org.alexandria.estaticos.evento.IEvento;
-import org.alexandria.estaticos.evento.RecompensaEvento;
+import org.alexandria.estaticos.area.mapa.Mapa
+import org.alexandria.estaticos.cliente.Jugador
+import org.alexandria.estaticos.evento.IEvento
+import org.alexandria.estaticos.evento.RecompensaEvento
+import java.time.Instant
 
-import java.time.Instant;
+abstract class Evento(
+    id: Byte,
+    maxPlayers: Byte,
+    name: String,
+    description: String?,
+    first: Array<RecompensaEvento>
+) : Thread(), IEvento {
+    val eventId: Byte
+    val maxPlayers: Byte
+    val eventName: String
+    private val description: String?
+    var map: Mapa? = null
+        protected set
+    var first: Array<RecompensaEvento>
+        protected set
+    lateinit var second: Array<RecompensaEvento>
+        protected set
+    lateinit var third: Array<RecompensaEvento>
+        protected set
 
-public abstract class Evento extends Thread implements IEvento {
-
-    protected final byte id, maxPlayers;
-    protected final String name;
-    protected final String description;
-    protected Mapa map;
-    protected RecompensaEvento[] first, second, third;
-
-    public Evento(byte id, byte maxPlayers, String name, String description, RecompensaEvento[] first) {
-        super.setName("Event-" + name);
-        super.setDaemon(true);
-        super.start();
-        this.id = id;
-        this.maxPlayers = maxPlayers;
-        this.name = name;
-        this.description = description;
-        this.first = first;
+    constructor(
+        id: Byte,
+        maxPlayers: Byte,
+        name: String,
+        description: String?,
+        first: Array<RecompensaEvento>,
+        second: Array<RecompensaEvento>,
+        third: Array<RecompensaEvento>
+    ) : this(id, maxPlayers, name, description, first) {
+        this.second = second
+        this.third = third
     }
 
-    public Evento(byte id, byte maxPlayers, String name, String description, RecompensaEvento[] first, RecompensaEvento[] second, RecompensaEvento[] third) {
-        this(id, maxPlayers, name, description, first);
-        this.second = second;
-        this.third = third;
-    }
+    abstract fun kickPlayer(player: Jugador?)
 
-    public byte getEventId() {
-        return id;
-    }
-
-    public byte getMaxPlayers() {
-        return maxPlayers;
-    }
-
-    public String getEventName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Mapa getMap() {
-        return map;
-    }
-
-    public RecompensaEvento[] getFirst() {
-        return first;
-    }
-
-    public RecompensaEvento[] getSecond() {
-        return second;
-    }
-
-    public RecompensaEvento[] getThird() {
-        return third;
-    }
-
-    public static void wait(int time) {
-        long newTime = Instant.now().toEpochMilli() + time;
-
-        while (Instant.now().toEpochMilli() < newTime) {
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+    companion object {
+        @JvmStatic
+        fun wait(time: Int) {
+            val newTime = Instant.now().toEpochMilli() + time
+            while (Instant.now().toEpochMilli() < newTime) {
+                try {
+                    sleep(50)
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
             }
         }
     }
 
-    public abstract void kickPlayer(Jugador player);
+    init {
+        super.setName("Event-$name")
+        super.setDaemon(true)
+        super.start()
+        eventId = id
+        this.maxPlayers = maxPlayers
+        eventName = name
+        this.description = description
+        this.first = first
+    }
 }

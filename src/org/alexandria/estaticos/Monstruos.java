@@ -1274,7 +1274,7 @@ public class Monstruos {
 
             this.oldMap = id;
 
-            ArrayList<Mapa> maps = new ArrayList<>(Mundo.mundo.getSubArea(211).getMaps());
+            ArrayList<Mapa> maps = new ArrayList<>(Mundo.mundo.getSubArea(211).maps);
             maps.remove(Mundo.mundo.getMap((short) 9589));
             maps.remove(Mundo.mundo.getMap((short) 9604));
 

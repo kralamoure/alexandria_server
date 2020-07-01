@@ -247,7 +247,7 @@ public class Prisma {
 
     public Area getArea() {
         Mapa Map = Mundo.mundo.getMap(this.Map);
-        return Map.getSubArea().getArea();
+        return Map.getSubArea().area;
     }
 
     public String getGMPrisme() {

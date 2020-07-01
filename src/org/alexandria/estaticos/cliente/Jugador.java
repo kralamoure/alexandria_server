@@ -3825,12 +3825,12 @@ public class Jugador {
         StringBuilder str = new StringBuilder();
         str.append(map);
 
-        int SubAreaID = curMap.getSubArea().getArea().getSuperArea();
+        int SubAreaID = curMap.getSubArea().area.getSuperArea();
 
         for (short i : _zaaps) {
             if (Mundo.mundo.getMap(i) == null)
                 continue;
-            if (Mundo.mundo.getMap(i).getSubArea().getArea().getSuperArea() != SubAreaID)
+            if (Mundo.mundo.getMap(i).getSubArea().area.getSuperArea() != SubAreaID)
                 continue;
             int cost = Formulas.calculZaapCost(curMap, Mundo.mundo.getMap(i));
             if (i == curMap.getId())
@@ -3843,14 +3843,14 @@ public class Jugador {
     public String parsePrismesList() {
         String map = curMap.getId() + "";
         StringBuilder str = new StringBuilder(map + "");
-        int SubAreaID = curMap.getSubArea().getArea().getSuperArea();
+        int SubAreaID = curMap.getSubArea().area.getSuperArea();
         for (Prisma Prisme : Mundo.mundo.AllPrisme()) {
             if (Prisme.getAlignement() != _align)
                 continue;
             short MapID = Prisme.getMap();
             if (Mundo.mundo.getMap(MapID) == null)
                 continue;
-            if (Mundo.mundo.getMap(MapID).getSubArea().getArea().getSuperArea() != SubAreaID)
+            if (Mundo.mundo.getMap(MapID).getSubArea().area.getSuperArea() != SubAreaID)
                 continue;
             if (Prisme.getInFight() == 0 || Prisme.getInFight() == -2) {
                 str.append("|").append(MapID).append(";*");
@@ -3917,7 +3917,7 @@ public class Jugador {
         if (kamas < cost)
             return;//S'il n'a pas les kamas (verif cot� client)
         short mapID = id;
-        int SubAreaID = curMap.getSubArea().getArea().getSuperArea();
+        int SubAreaID = curMap.getSubArea().area.getSuperArea();
         int cellID = Mundo.mundo.getZaapCellIdByMapId(id);
         if (Mundo.mundo.getMap(mapID) == null) {
             JuegoServidor.a();
@@ -3934,7 +3934,7 @@ public class Jugador {
             GestorSalida.GAME_SEND_WUE_PACKET(this);
             return;
         }
-        if (Mundo.mundo.getMap(mapID).getSubArea().getArea().getSuperArea() != SubAreaID) {
+        if (Mundo.mundo.getMap(mapID).getSubArea().area.getSuperArea() != SubAreaID) {
             GestorSalida.GAME_SEND_WUE_PACKET(this);
             return;
         }
@@ -3992,7 +3992,7 @@ public class Jugador {
 
     public String parsePrisme() {
         String str = "";
-        Prisma Prisme = Mundo.mundo.getPrisme(curMap.getSubArea().getPrismId());
+        Prisma Prisme = Mundo.mundo.getPrisme(curMap.getSubArea().prismId);
         if (Prisme == null)
             str = "-3";
         else if (Prisme.getInFight() == 0) {
@@ -4040,14 +4040,14 @@ public class Jugador {
                     }
                 }
             }
-            if (map.getSubArea() != null && (map.getSubArea().getArea().getId() == 7 || map.getSubArea().getArea().getId() == 11)) {
+            if (map.getSubArea() != null && (map.getSubArea().area.getId() == 7 || map.getSubArea().area.getId() == 11)) {
                 int price = 20;
                 if (this.get_align() == 1 || this.get_align() == 2)
                     price = 10;
                 kamas -= price;
                 GestorSalida.GAME_SEND_STATS_PACKET(this);
-                if ((map.getSubArea().getArea().getId() == 7 && this.getCurMap().getSubArea().getArea().getId() == 7)
-                        || (map.getSubArea().getArea().getId() == 11 && this.getCurMap().getSubArea().getArea().getId() == 11)) {
+                if ((map.getSubArea().area.getId() == 7 && this.getCurMap().getSubArea().area.getId() == 7)
+                        || (map.getSubArea().area.getId() == 11 && this.getCurMap().getSubArea().area.getId() == 11)) {
                     this.teleport(Short.parseShort(packet.substring(2)), cell);
                 }
                 GestorSalida.GAME_SEND_CLOSE_ZAAPI_PACKET(this);
@@ -4484,7 +4484,7 @@ public class Jugador {
             return;
         }
         if (this.getEnergy() != 0)
-            Constantes.tpCim(this.getCurMap().getSubArea().getArea().getId(), this);
+            Constantes.tpCim(this.getCurMap().getSubArea().area.getId(), this);
         this.dead = 0;
         this.isGhost = true;
         this.setEnergy(0);
@@ -5441,11 +5441,11 @@ public class Jugador {
         }
         if (this.curMap.getSubArea() == null)
             return false;
-        if (this.curMap.getSubArea().getArea() == null)
+        if (this.curMap.getSubArea().area == null)
             return false;
-        if (this.curMap.getSubArea().getArea().getSuperArea() == 3
-                || this.curMap.getSubArea().getArea().getSuperArea() == 4
-                || this.curMap.getSubArea().getArea().getId() == 18)
+        if (this.curMap.getSubArea().area.getSuperArea() == 3
+                || this.curMap.getSubArea().area.getSuperArea() == 4
+                || this.curMap.getSubArea().area.getId() == 18)
             ok = false;
 
         return ok;

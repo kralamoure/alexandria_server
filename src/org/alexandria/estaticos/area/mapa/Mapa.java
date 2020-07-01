@@ -2480,12 +2480,12 @@ public class Mapa {
                     int count = 0;
                     int price = 20;
 
-                    if (player.getCurMap().getSubArea().getArea().getId() == 7 && (player.get_align() == 1 || player.get_align() == 0 || player.get_align() == 3))//Ange, Neutre ou S�rianne
+                    if (player.getCurMap().getSubArea().area.getId() == 7 && (player.get_align() == 1 || player.get_align() == 0 || player.get_align() == 3))//Ange, Neutre ou S�rianne
                     {
                         Zaapis = Constantes.ZAAPI.get(Constantes.ALINEAMIENTO_BONTARIANO).split(",");
                         if (player.get_align() == 1)
                             price = 10;
-                    } else if (player.getCurMap().getSubArea().getArea().getId() == 11
+                    } else if (player.getCurMap().getSubArea().area.getId() == 11
                             && (player.get_align() == 2 || player.get_align() == 0 || player.get_align() == 3))//D�mons, Neutre ou S�rianne
                     {
                         Zaapis = Constantes.ZAAPI.get(Constantes.ALINEAMIENTO_BRAKMARIANO).split(",");

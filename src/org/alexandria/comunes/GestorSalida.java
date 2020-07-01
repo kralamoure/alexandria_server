@@ -2183,7 +2183,7 @@ public class GestorSalida {
             return;
         }
         for (Jugador player : Mundo.mundo.getOnlinePlayers())
-            if (player.getCurMap() != null && player.getCurMap().getSubArea() != null && player.getCurMap().getSubArea().getArea() != null && player.getCurMap().getSubArea().getArea().getId() == 45)
+            if (player.getCurMap() != null && player.getCurMap().getSubArea() != null && player.getCurMap().getSubArea().area != null && player.getCurMap().getSubArea().area.getId() == 45)
                 send(player, packet);
     }
 

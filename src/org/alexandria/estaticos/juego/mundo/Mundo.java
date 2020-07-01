@@ -188,7 +188,7 @@ public class Mundo {
     }
 
     public void addMap(Mapa map) {
-        if(map.getSubArea() != null && map.getSubArea().getArea().getId() == 42 && !Configuracion.INSTANCE.getNOEL())
+        if(map.getSubArea() != null && map.getSubArea().area.getId() == 42 && !Configuracion.INSTANCE.getNOEL())
             return;
         mapa.put(map.getId(), map);
     }
@@ -514,7 +514,7 @@ public class Mundo {
                                 }
                                 if (subArea == null)
                                     continue;
-                                for (Mapa Map : subArea.getMaps()) {
+                                for (Mapa Map : subArea.maps) {
                                     if (Map == null)
                                         continue;
                                     if (Map.haveMobFix())
@@ -623,13 +623,13 @@ public class Mundo {
     public double getBalanceArea(Area area, int alignement) {
         int cant = 0;
         for (SubArea subarea : subAreas.values()) {
-            if (subarea.getArea() == area
+            if (subarea.area == area
                     && subarea.getAlignement() == alignement)
                 cant++;
         }
         if (cant == 0)
             return 0;
-        return Math.rint((1000 * cant / (area.getSubAreas().size())) / 10);
+        return Math.rint((1000 * cant / (area.subAreas.size())) / 10);
     }
 
     public double getBalanceWorld(int alignement) {
@@ -947,7 +947,7 @@ public class Mundo {
     }
 
     public ArrayList<Mapa> getMapByPosInArrayPlayer(int mapX, int mapY, Jugador player) {
-        return mapa.values().stream().filter(map -> map != null && map.getSubArea() != null && player.getCurMap().getSubArea() != null).filter(map -> map.getX() == mapX && map.getY() == mapY && map.getSubArea().getArea().getSuperArea() == player.getCurMap().getSubArea().getArea().getSuperArea()).collect(Collectors.toCollection(ArrayList::new));
+        return mapa.values().stream().filter(map -> map != null && map.getSubArea() != null && player.getCurMap().getSubArea() != null).filter(map -> map.getX() == mapX && map.getY() == mapY && map.getSubArea().area.getSuperArea() == player.getCurMap().getSubArea().area.getSuperArea()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     public void addGuild(Gremio g, boolean save) {
@@ -1300,10 +1300,10 @@ public class Mundo {
             if (first)
                 str.append(";");
             str.append(subarea.getId()).append(",").append(subarea.getAlignement() == 0 ? -1 : subarea.getAlignement()).append(",0,");
-            if (getPrisme(subarea.getPrismId()) == null)
+            if (getPrisme(subarea.prismId) == null)
                 str.append(0 + ",1");
             else
-                str.append(subarea.getPrismId() == 0 ? 0 : getPrisme(subarea.getPrismId()).getMap()).append(",1");
+                str.append(subarea.prismId == 0 ? 0 : getPrisme(subarea.prismId).getMap()).append(",1");
             first = true;
             subareas++;
         }
@@ -1318,7 +1318,7 @@ public class Mundo {
                 continue;
             if (first)
                 str.append(";");
-            str.append(area.getId()).append(",").append(area.getAlignement()).append(",1,").append(area.getPrismId() == 0 ? 0 : 1);
+            str.append(area.getId()).append(",").append(area.getAlignement()).append(",1,").append(area.prismId == 0 ? 0 : 1);
             first = true;
         }
         if (alignement == 1)
