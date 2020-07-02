@@ -26,6 +26,7 @@ public class Peleador implements Comparable<Peleador> {
 
     private final Logger logger;
     public int nbrInvoc;
+    public boolean trapped = false;
     public boolean inLancer = false;
     public boolean isStatique = false;
     private int id = 0;

@@ -4,6 +4,8 @@ import org.alexandria.estaticos.Monstruos.MobGrade;
 import org.alexandria.estaticos.pelea.Pelea;
 import org.alexandria.estaticos.pelea.Peleador;
 import org.alexandria.estaticos.pelea.inteligencia.tipo.*;
+import org.alexandria.estaticos.pelea.inteligencia.tipo.invocaciones.BworkMago;
+import org.alexandria.estaticos.pelea.inteligencia.tipo.invocaciones.DragonitoRojo;
 
 public class InteligenciaHandler {
 
@@ -16,10 +18,10 @@ public class InteligenciaHandler {
                 if (fighter.isDouble())
                     ia = new IA5(fight, fighter, (byte) 5);
                 else if (fighter.isCollector())
-                    ia = new IA30(fight, fighter, (byte) 5);
+                    ia = new IARecaudador(fight, fighter, (byte) 5);
 
                 final Inteligencia finalIA = ia;
-                ia.addNext(finalIA::endTurn, 2000);
+                finalIA.endTurn();
             } else if (mobGrade.getTemplate() == null) {
                 ia.setStop(true);
                 ia.endTurn();
@@ -28,8 +30,8 @@ public class InteligenciaHandler {
                 ia = switch (mobGrade.getTemplate().getIa()) {
                     //IA BASIQUE attaque,pm,attaque,pm
                     case 1, 27 -> new IA27(fight, fighter, (byte) 4);
-                    //IA Dragonnet rouge
-                    case 2 -> new IA2(fight, fighter, (byte) 6);
+                    //Dragonito Rojo
+                    case 2 -> new DragonitoRojo(fight, fighter, (byte) 5);
                     //IA Bloqueuse : Avancer vers ennemis
                     case 5 -> new IA5(fight, fighter, (byte) 5);
                     //IA type invocations (Coffre anim�)
@@ -154,6 +156,8 @@ public class InteligenciaHandler {
                     case 70 -> new IA70(fight, fighter, (byte) 6);
                     //IA Ougah
                     case 71 -> new IA71(fight, fighter, (byte) 4);
+                    //Bwork Mago
+                    case 72 -> new BworkMago(fight, fighter, (byte) 4);
                     default -> ia;
                 };
                 //endregion
@@ -161,9 +165,16 @@ public class InteligenciaHandler {
 
             final Inteligencia finalIA = ia;
             ia.addNext(() -> {
-                finalIA.apply();
-                finalIA.addNext(finalIA::endTurn, 1000);
-            },0);
+                        try {
+                            finalIA.apply();
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        finalIA.addNext(finalIA::endTurn, 1500);
+                    }
+                    , 500);
         }
+
     }
 }

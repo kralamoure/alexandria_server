@@ -19,7 +19,7 @@ public class IA2 extends InteligenciaAbstracta {
             if (target == null) return;
             if (!Funcion.getInstance().moveNearIfPossible(this.fight, this.fighter, target)) this.stop = true;
 
-            addNext(this::decrementCount, 1000);
+            this.addNext(this::decrementCount, 1000);
         } else {
             this.stop = true;
         }

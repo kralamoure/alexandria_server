@@ -1,0 +1,11 @@
+-----------------------------------------------------
+Alexandria EMU - By Player-xD
+http://privatedofus.net
+-----------------------------------------------------
+
+v0.01.0
+- Recaudadores toman los hechizos y los ejecutan en pelea
+- Dragonito rojo deshechiza, pega y se aleja de los enemigos
+- Nuevo sistema de manejo de thread y timmers
+- Kralamar gigante funcionando a la perfeccion
+- Hechizo Devoción desbugueado

@@ -36,7 +36,7 @@ public class IA10 extends InteligenciaAbstracta {
                 this.stop = true;
             }
 
-            addNext(this::decrementCount, 800);
+            this.addNext(this::decrementCount, 800);
         } else {
             this.stop = true;
         }

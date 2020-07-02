@@ -712,13 +712,12 @@ public class Retos {
         }
     }
 
-    public void onPlayerEndTurn (Peleador fighter)
-    {
+    public void onPlayerEndTurn (Peleador fighter) {
         if (!challengeAlive)
             return;
 
         boolean hasFailed = false;
-        ArrayList<Peleador> fighters = Camino.getFightersAround(fighter.getCell().getId(), fight.getMap(), fight);
+        ArrayList<Peleador> fighters = Camino.getFightersAround(fighter.getCell().getId(), fight.getMap());
 
         switch (Type) {
             case 1: // Zombie

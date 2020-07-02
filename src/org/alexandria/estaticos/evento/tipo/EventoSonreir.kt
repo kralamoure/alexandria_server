@@ -11,7 +11,7 @@ import org.alexandria.estaticos.evento.RecompensaEvento
 import org.alexandria.estaticos.juego.mundo.Mundo
 import org.alexandria.otro.utilidad.Doble
 import org.alexandria.otro.utilidad.Temporizador
-import org.alexandria.otro.utilidad.Temporizador.Companion.addSiguiente
+import org.alexandria.otro.utilidad.Temporizador.addSiguiente
 import java.util.*
 import java.util.concurrent.TimeUnit
 

@@ -1,5 +1,6 @@
 package org.alexandria.comunes;
 
+import org.alexandria.estaticos.area.mapa.CellCacheImpl;
 import org.alexandria.estaticos.area.mapa.Mapa;
 import org.alexandria.estaticos.cliente.Jugador;
 import org.alexandria.configuracion.Configuracion;
@@ -86,7 +87,7 @@ public class Formulas {
         return num;
     }
 
-    public static int getRandomJet(String jet, Peleador target, Peleador caster)//1d5+6
+    public static int getRandomJet(Peleador caster, Peleador target, String jet)//1d5+6
     {
         try {
             if(target != null)
@@ -1121,5 +1122,42 @@ public class Formulas {
         for (String i : alpha.split(" "))
             msg = msg.replace(i, "H");
         return msg;
+    }
+
+    public static boolean checkLos(Mapa map, short castID, short targetID) {
+        if (map == null || castID == targetID) {
+            return true;
+        }
+        CellCacheImpl cache = map.getCellCache();
+        if (cache == null) {
+            return false;
+        }
+        float curX = cache.getOrthX(castID);
+        float curY = cache.getOrthY(castID);
+        int dstX = cache.getOrthX(targetID);
+        int dstY = cache.getOrthY(targetID);
+        int offX = dstX - (int)curX;
+        int offY = dstY - (int)curY;
+        float steps = cache.getCellsDistance(castID, targetID);
+        steps = Math.max(1.0f, steps);
+        curX = (float)((double)curX + 0.5);
+        curY = (float)((double)curY + 0.5);
+        int t = 0;
+        while ((float)t < steps) {
+            Mapa.GameCase cell;
+            int xFloored = (int)Math.floor(curX);
+            int yFloored = (int)Math.floor(curY);
+            short cellId = (short)cache.getOrthCellID(xFloored, yFloored);
+            if ((curX != (float)xFloored || curY != (float)yFloored) && cellId != targetID && cellId != castID && (cell = map.getCase(cellId)) != null) {
+                Peleador fighter = cell.getFirstFighter();
+                if (!cell.isLoS() || fighter != null && !fighter.isHide()) {
+                    return false;
+                }
+            }
+            ++t;
+            curX += (float)offX / steps;
+            curY += (float)offY / steps;
+        }
+        return true;
     }
 }

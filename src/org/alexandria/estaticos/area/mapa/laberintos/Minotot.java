@@ -5,8 +5,8 @@ import org.alexandria.estaticos.cliente.Jugador;
 import org.alexandria.comunes.Formulas;
 import org.alexandria.comunes.GestorSalida;
 import org.alexandria.estaticos.juego.mundo.Mundo;
-import org.alexandria.otro.utilidad.Temporizador;
 import org.alexandria.estaticos.area.mapa.Mapa.GameCase;
+import org.alexandria.otro.utilidad.Temporizador;
 
 import java.util.concurrent.TimeUnit;
 

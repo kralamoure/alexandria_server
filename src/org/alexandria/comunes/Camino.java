@@ -22,23 +22,20 @@ public class Camino {
     private static Integer nSteps = 0;
 
     //String a StringBuilder
-    public static int isValidPath(Mapa map, int cellID, AtomicReference<String> pathRef, Pelea fight, Jugador perso, int targetCell)
-    {
-        synchronized(nSteps)
-        {
+    public static int isValidPath(Mapa map, int cellID, AtomicReference<String> pathRef, Pelea fight, Jugador perso, int targetCell) {
+        synchronized(nSteps) {
             nSteps=0;
             int newPos=cellID;
             int Steps=0;
             String path=pathRef.get();
             StringBuilder newPath=new StringBuilder();
-            for(int i=0;i<path.length();i+=3)
-            {
+            for(int i=0;i<path.length();i+=3) {
                 String SmallPath=path.substring(i,i+3);
                 char dir=SmallPath.charAt(0);
                 int dirCaseID=Mundo.mundo.getCryptManager().codigoceldaID(SmallPath.substring(1));
                 nSteps=0;
                 //Si en combat et Si Pas d�but du path, on v�rifie tacle
-                if(fight!=null&&i!=0&&getEnemyFighterArround(newPos,map,fight)!=null)
+                if(fight!=null&&i!=0&&getEnemyFighterArround(newPos,map,fight, true)!=null)
                 {
                     pathRef.set(newPath.toString());
                     return Steps;
@@ -116,20 +113,16 @@ public class Camino {
         return false;
     }
 
-    //Arreglo interrupir por invisibilidad enemiga
-    public static ArrayList<Peleador> getEnemyFighterArround(int cellID, Mapa map, Pelea fight)
-    {
+    /*//Arreglo interrupir por invisibilidad enemiga
+    public static ArrayList<Peleador> getEnemyFighterArround(int cellID, Mapa map, Pelea fight) {
         char[] dirs= { 'b', 'd', 'f', 'h' };
         ArrayList<Peleador> enemy= new ArrayList<>();
 
-        for(char dir : dirs)
-        {
+        for(char dir : dirs) {
             GameCase cell=map.getCase((short)GetCaseIDFromDirrection(cellID,dir,map,false));
-            if(cell!=null)
-            {
+            if(cell!=null) {
                 Peleador f=cell.getFirstFighter();
-                if(f!=null)
-                {
+                if(f!=null) {
                     if(f.getFight()!=fight)
                         continue;
                     if(f.getTeam()!=fight.getFighterByOrdreJeu().getTeam()&&!f.isHide())
@@ -140,6 +133,21 @@ public class Camino {
         if(enemy.size()==0||enemy.size()==4)
             return null;
 
+        return enemy;
+    }*/
+
+    public static ArrayList<Peleador> getEnemyFighterArround(int cellID, Mapa map, Pelea fight, boolean returnNull) {
+        char[] dirs = new char[]{'b', 'd', 'f', 'h'};
+        ArrayList<Peleador> enemy = new ArrayList<Peleador>();
+        for (char dir : dirs) {
+            Peleador f;
+            GameCase cell = map.getCase((short)Camino.GetCaseIDFromDirrection(cellID, dir, map, false));
+            if (cell == null || (f = cell.getFirstFighter()) == null || f.getFight() != fight || f.isHide() || f.getTeam() == fight.getFighterByOrdreJeu().getTeam()) continue;
+            enemy.add(f);
+        }
+        if (returnNull && (enemy.size() == 0 || enemy.size() == 4)) {
+            return null;
+        }
         return enemy;
     }
 
@@ -230,7 +238,7 @@ public class Camino {
             } else {
                 if (fight.isOccuped(lastPos))
                     return "no:";
-                if (getEnemyFighterArround(lastPos, map, fight) != null)//Si ennemie proche
+                if (getEnemyFighterArround(lastPos, map, fight, true) != null)//Si ennemie proche
                     return "stop:" + lastPos;
                 for (Trampas p : fight.getAllTraps()) {
                     if (getDistanceBetween(map, p.getCelda().getId(), lastPos) <= p.getSize()) {//on arrete le d�placement sur la 1ere case du piege
@@ -395,40 +403,40 @@ public class Camino {
         return null;
     }
 
+    //Nuevas ediciones
     public static int newCaseAfterPush(Pelea fight, GameCase CCase, GameCase TCase, int value) {
-        // Si c'est les memes case, il n'y a pas a bouger
-        boolean onTrap = false;
+        Mapa map = fight.getMap();
         if (CCase.getId() == TCase.getId())
             return 0;
-        Mapa map = fight.getMap();
+
         char c = getDirBetweenTwoCase(CCase.getId(), TCase.getId(), map, true);
         int id = TCase.getId();
+
         if (value < 0) {
             c = getOpositeDirection(c);
             value = -value;
         }
+        boolean b = false;
         for (int a = 0; a < value; a++) {
             int nextCase = GetCaseIDFromDirrection(id, c, map, true);
-
-            for (Trampas p : fight.getAllTraps()) {
-                int dist = Camino.getDistanceBetween(map, p.getCelda().getId(), nextCase);
-                if (dist <= p.getSize())
-                    onTrap = true;
+            for (Trampas trap : fight.getAllTraps()) {
+                GameCase trapCell = trap.getCelda();
+                GameCase nextCell = map.getCase(nextCase);
+                if (getDistanceBetweenTwoCase(map, trap.getCelda(), map.getCase(nextCase)) <= trap.getSize()) {
+                    id = nextCase;
+                    if (!Camino.casesAreInSameLine(map, trapCell.getId(), nextCell.getId(), 'z', 15)) {
+                        id = Camino.GetCaseIDFromDirrection(nextCase, c, map, true);
+                    }
+                    b = true;
+                }
             }
-
-            if (map.getCase(nextCase) != null && map.getCase(nextCase).isWalkable(true)
-                    && map.getCase(nextCase).getFighters().isEmpty())
+            if (b) break;
+            if (map.getCase(nextCase) != null && map.getCase(nextCase).isWalkable(true) && map.getCase(nextCase).getFirstFighter() == null)
                 id = nextCase;
-            else
-                return -(value - a);
-            if (onTrap) {
-                System.out.println(value - a);
-                return id;
-            }
+            else return -(value - a);
         }
 
-        if (id == TCase.getId())
-            id = 0;
+        if (id == TCase.getId()) id = 0;
         return id;
     }
 
@@ -448,32 +456,31 @@ public class Camino {
             value=-value;
         }
 
-        if(dir==0x00)
-            return 0;
-        boolean b=false;
-        for(int a=0;a<value;a++)
-        {
-            int nextCase=GetCaseIDFromDirrection(id,dir,map,true);
+        boolean b = false;
+        for (int a = 0; a < value; a++) {
+            int nextCase = GetCaseIDFromDirrection(id, dir, map, true);
 
-            for(Trampas trap : fight.getAllTraps())
-            {
-                if(getDistanceBetweenTwoCase(map,trap.getCelda(),map.getCase(nextCase))<=trap.getSize())
-                {
-                    id=nextCase;
-                    b=true;
+            for (Trampas trap : fight.getAllTraps()) {
+                GameCase trapCell = trap.getCelda();
+                GameCase nextCell = map.getCase(nextCase);
+                if (getDistanceBetweenTwoCase(map, trap.getCelda(), map.getCase(nextCase)) <= trap.getSize()) {
+                    id = nextCase;
+                    if (!Camino.casesAreInSameLine(map, trapCell.getId(), nextCell.getId(), 'z', 15)) {
+                        id = Camino.GetCaseIDFromDirrection(nextCase, dir, map, true);
+                    }
+                    b = true;
                 }
             }
 
-            if(b)
-                break;
+            if (b) break;
 
-            if(map.getCase(nextCase)!=null&&map.getCase(nextCase).isWalkable(false)&&map.getCase(nextCase).getFighters().isEmpty())
-                id=nextCase;
+            if (map.getCase(nextCase) != null && map.getCase(nextCase).isWalkable(false) && map.getCase(nextCase).getFighters().isEmpty())
+                id = nextCase;
             else
-                return -(value-a);
+                return -(value - a);
         }
 
-        if(id==targetCell.getId())
+        if (id == targetCell.getId())
             return 0;
         return id;
     }
@@ -1689,6 +1696,36 @@ public class Camino {
         if (start == dest)
             return null;
         ArrayList<GameCase> path = getShortestPathBetween(map, start, dest, distMax);
+        if (path == null)
+            return null;
+        String pathstr = "";
+        int curCaseID = start;
+        char curDir = '\000';
+        for (GameCase c : path) {
+            char d = getDirBetweenTwoCase(curCaseID, c.getId(), map, true);
+            if (d == 0)
+                return null;
+            if (curDir != d) {
+                if (path.indexOf(c) != 0)
+                    pathstr = pathstr + Mundo.mundo.getCryptManager().idceldaCodigo(curCaseID);
+                pathstr = pathstr + d;
+                curDir = d;
+            }
+            curCaseID = c.getId();
+        }
+        if (curCaseID != start) {
+            pathstr = pathstr + Mundo.mundo.getCryptManager().idceldaCodigo(curCaseID);
+        }
+        if (pathstr.isEmpty())
+            return null;
+        return "a" + Mundo.mundo.getCryptManager().idceldaCodigo(start) + pathstr;
+    }
+
+    /*public static String getShortestStringPathBetween(Mapa map, int start,
+                                                      int dest, int distMax) {
+        if (start == dest)
+            return null;
+        ArrayList<GameCase> path = getShortestPathBetween(map, start, dest, distMax);
         StringBuilder pathstr = new StringBuilder();
         int curCaseID = start;
         char curDir = '\000';
@@ -1710,7 +1747,7 @@ public class Camino {
         if (pathstr.length() == 0)
             return null;
         return "a" + Mundo.mundo.getCryptManager().idceldaCodigo(start) + pathstr;
-    }
+    }*/
 
     public static boolean isBord1(int id) {
         int[] bords = {1, 30, 59, 88, 117, 146, 175, 204, 233, 262, 291, 320, 349, 378, 407, 436, 465, 15, 44, 73, 102, 131, 160, 189, 218, 247, 276, 305, 334, 363, 392, 421, 450, 479};
@@ -1877,7 +1914,19 @@ public class Camino {
         return toReturn;
     }
 
-    public static ArrayList<Peleador> getFightersAround(int cellID, Mapa map, Pelea fight) {
+    public static ArrayList<Peleador> getFightersAround(int cellID, Mapa map) {
+        char[] dirs = new char[]{'b', 'd', 'f', 'h'};
+        ArrayList<Peleador> fighters = new ArrayList<Peleador>();
+        for (char dir : dirs) {
+            Peleador f;
+            GameCase gameCase = map.getCase(Camino.GetCaseIDFromDirrection(cellID, dir, map, false));
+            if (gameCase == null || (f = gameCase.getFirstFighter()) == null) continue;
+            fighters.add(f);
+        }
+        return fighters;
+    }
+
+    /*public static ArrayList<Peleador> getFightersAround(int cellID, Mapa map, Pelea fight) {
         char[] dirs = {'b', 'd', 'f', 'h'};
         ArrayList<Peleador> fighters = new ArrayList<>();
 
@@ -1889,7 +1938,7 @@ public class Camino {
                 fighters.add(f);
         }
         return fighters;
-    }
+    }*/
 
     public static char getDirEntreDosCeldas(Mapa map, int id1, int id2) {
         if (id1 == id2)

@@ -718,13 +718,6 @@ public class EfectoHechizo {
 			case 402://Glyphe des Blop
 				applyEffect_402(fight);
 				break;
-			/*case 606://Ancien chati
-			case 607:
-			case 608:
-			case 609:
-			case 611:
-				applyEffect_606To611(cibles, fight);
-				break;*/
 			case 666://Pas d'effet complémentaire
 				break;
 			case 671://Dommages : X% de la vie de l'attaquant (neutre)
@@ -2254,156 +2247,116 @@ public class EfectoHechizo {
 		}
 	}
 
-	private void applyEffect_97(ArrayList<Peleador> cibles, Pelea fight, boolean isCaC)//dmg terre
-	{
-		if (isCaC)//CaC Terre
-		{
-			if (caster.isHide())
-				caster.unHide(spell);
-			for (Peleador target : cibles) {
-				if (caster.isMob()) {
-					if (caster.getTeam2() == target.getTeam2() && !caster.isInvocation())
-						continue; // Les monstres de s'entretuent pas
+	private void applyEffect_97(ArrayList<Peleador> cibles, Pelea fight, boolean isCaC) {
+		if (isCaC) {
+			if (this.caster.isHide()) {
+				this.caster.unHide(this.spell);
+			}
+			Iterator<Peleador> iterator = cibles.iterator();
+			while (iterator.hasNext()) {
+				Peleador target = iterator.next();
+				if (this.caster.isMob() && this.spell != 946 && this.caster.getTeam2() == target.getTeam2() && !this.caster.isInvocation()) continue;
+				if (target.hasBuff(765) && target.getBuff(765) != null && !target.getBuff(765).getCaster().isDead()) {
+					this.applyEffect_765B(fight, target);
+					target = target.getBuff(765).getCaster();
 				}
-
-				if (target.hasBuff(765))//sacrifice
-				{
-					if (target.getBuff(765) != null && !target.getBuff(765).getCaster().isDead()) {
-						applyEffect_765B(fight, target);
-						target = target.getBuff(765).getCaster();
+				int dmg = Formulas.getRandomJet(this.caster, target, this.args.split(";")[5]);
+				for (EfectoHechizo SE : this.caster.getBuffsByEffectID(293)) {
+					if (SE.getValue() != this.spell) continue;
+					int add = -1;
+					try {
+						add = Integer.parseInt(SE.getArgs().split(";")[2]);
 					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
+					if (add <= 0) continue;
+					dmg += add;
 				}
-
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
-
-				//Si le sort est boost� par un buff sp�cifique
-				for (EfectoHechizo SE : caster.getBuffsByEffectID(293)) {
-					if (SE.getValue() == spell) {
+				int finalDommage = Formulas.calculFinalDommage(fight, this.caster, target, 1, dmg, false, true, this.spell);
+				if ((finalDommage = applyOnHitBuffs(finalDommage, target, this.caster, fight, 1)) > target.getPdv()) {
+					finalDommage = target.getPdv();
+				}
+				target.removePdv(this.caster, finalDommage);
+				this.checkLifeTree(target, finalDommage);
+				finalDommage = - finalDommage;
+				GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, "" + this.caster.getId() + "", "" + target.getId() + "," + finalDommage);
+				if (target.getMob() != null) {
+					this.verifmobs(fight, target, 97, finalDommage);
+				}
+				if (target.getPdv() > 0) continue;
+				fight.onFighterDie(target, this.caster);
+				if (target.canPlay() && target.getPlayer() != null) {
+					fight.endTurn(false);
+					continue;
+				}
+				if (!target.canPlay()) continue;
+				target.setCanPlay(false);
+			}
+		} else if (this.turns <= 0) {
+			if (this.caster.isHide()) {
+				this.caster.unHide(this.spell);
+			}
+			Iterator<Peleador> iterator = cibles.iterator();
+			while (iterator.hasNext()) {
+				Peleador target = iterator.next();
+				if (this.spell != 946 && this.caster.isMob() && this.caster.getTeam2() == target.getTeam2() && !this.caster.isInvocation()) continue;
+				if (target.hasBuff(765) && target.getBuff(765) != null && !target.getBuff(765).getCaster().isDead()) {
+					this.applyEffect_765B(fight, target);
+					target = target.getBuff(765).getCaster();
+				}
+				if (target.hasBuff(106) && target.getBuffValue(106) >= this.spellLvl && this.spell != 0 && !this.isPoison()) {
+					GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 106, "" + target.getId() + "", "" + target.getId() + ",1");
+					target = this.caster;
+				}
+				int dmg = Formulas.getRandomJet(this.caster, target, this.args.split(";")[5]);
+				if (this.caster.hasBuff(293) || this.caster.haveState(300)) {
+					if (this.caster.haveState(300)) {
+						this.caster.setState(300, 0, caster.getId());
+					}
+					for (EfectoHechizo SE : this.caster.getBuffsByEffectID(293)) {
+						if (SE == null || SE.getValue() != this.spell) continue;
 						int add = -1;
 						try {
 							add = Integer.parseInt(SE.getArgs().split(";")[2]);
-						} catch (Exception e) {
+						}
+						catch (Exception e) {
 							e.printStackTrace();
 						}
-						if (add <= 0)
-							continue;
+						if (add <= 0) continue;
 						dmg += add;
 					}
 				}
-				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constantes.ELEMENT_TERRE, dmg, false, true, spell);
-
-				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constantes.ELEMENT_TERRE);//S'il y a des buffs sp�ciaux
-
-				if (finalDommage > target.getPdv())
-					finalDommage = target.getPdv();//Target va mourrir
-				target.removePdv(caster, finalDommage);
-				int cura = finalDommage;
-
-				if (target.hasBuff(786)) {
-					if ((cura + caster.getPdv()) > caster.getPdvMax())
-						cura = caster.getPdvMax() - caster.getPdv();
-					caster.removePdv(caster, -cura);
-					GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, target.getId()
-							+ "", caster.getId() + ",+" + cura);
+				int finalDommage = Formulas.calculFinalDommage(fight, this.caster, target, 1, dmg, false, false, this.spell);
+				if ((finalDommage = applyOnHitBuffs(finalDommage, target, this.caster, fight, 1)) > target.getPdv()) {
+					finalDommage = target.getPdv();
 				}
-
-				finalDommage = -(finalDommage);
-				GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, caster.getId()
-						+ "", target.getId() + "," + finalDommage);
-				if (target.getMob() != null)
-					verifmobs(fight, target, 97, cura);
-				if (target.getPdv() <= 0) {
-					fight.onFighterDie(target, caster);
-					if (target.canPlay() && target.getPlayer() != null)
-						fight.endTurn(false);
-					else if (target.canPlay())
-						target.setCanPlay(false);
+				target.removePdv(this.caster, finalDommage);
+				this.checkLifeTree(target, finalDommage);
+				finalDommage = - finalDommage;
+				GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, "" + this.caster.getId() + "", "" + target.getId() + "," + finalDommage);
+				if (target.getMob() != null) {
+					this.verifmobs(fight, target, 97, finalDommage);
 				}
-			}
-		} else if (turns <= 0) {
-			if (caster.isHide())
-				caster.unHide(spell);
-			for (Peleador target : cibles) {
-				if (caster.isMob() && (caster.getTeam2() == target.getTeam2()) && !caster.isInvocation())
-					continue; // Les monstres de s'entretuent pas
-
-				if (target.hasBuff(765))//sacrifice
-				{
-					if (target.getBuff(765) != null
-							&& !target.getBuff(765).getCaster().isDead()) {
-						applyEffect_765B(fight, target);
-						target = target.getBuff(765).getCaster();
-					}
+				if (target.getPdv() > 0) continue;
+				fight.onFighterDie(target, this.caster);
+				if (target.trapped) continue;
+				if (target.canPlay() && target.getPlayer() != null) {
+					fight.endTurn(false);
+					continue;
 				}
-				//si la cible a le buff renvoie de sort
-
-				if (target.hasBuff(106) && target.getBuffValue(106) >= spellLvl && spell != 0) {
-					GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 106, target.getId() + "", target.getId() + ",1");
-					//le lanceur devient donc la cible
-					target = caster;
-				}
-
-				int dmg = Formulas.getRandomJet(args.split(";")[5]);
-
-				//Si le sort est boost� par un buff sp�cifique
-				if (caster.hasBuff(293) || caster.haveState(300)) {
-					if (caster.haveState(300))
-						caster.setState(300, 0, caster.getId());
-					for (EfectoHechizo SE : caster.getBuffsByEffectID(293)) {
-						if (SE == null)
-							continue;
-						if (SE.getValue() == spell) {
-							int add = -1;
-							try {
-								add = Integer.parseInt(SE.getArgs().split(";")[2]);
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-							if (add <= 0)
-								continue;
-							dmg += add;
-						}
-					}
-				}
-
-				int finalDommage = Formulas.calculFinalDommage(fight, caster, target, Constantes.ELEMENT_TERRE, dmg, false, false, spell);
-				finalDommage = applyOnHitBuffs(finalDommage, target, caster, fight, Constantes.ELEMENT_TERRE);//S'il y a des buffs sp�ciaux
-				if (finalDommage > target.getPdv())
-					finalDommage = target.getPdv();//Target va mourrir
-				target.removePdv(caster, finalDommage);
-				int cura = finalDommage;
-
-				if (target.hasBuff(786)) {
-					if ((cura + caster.getPdv()) > caster.getPdvMax())
-						cura = caster.getPdvMax() - caster.getPdv();
-					caster.removePdv(caster, -cura);
-					GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, target.getId()
-							+ "", caster.getId() + ",+" + cura);
-				}
-				finalDommage = -(finalDommage);
-				GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, 100, caster.getId()
-						+ "", target.getId() + "," + finalDommage);
-				if (target.getMob() != null)
-					verifmobs(fight, target, 97, cura);
-				if (target.getPdv() <= 0) {
-					fight.onFighterDie(target, caster);
-					if (target.canPlay() && target.getPlayer() != null)
-						fight.endTurn(false);
-					else if (target.canPlay())
-						target.setCanPlay(false);
-				}
-
+				if (!target.canPlay()) continue;
+				target.setCanPlay(false);
 			}
 		} else {
-			if (spell == 470) {
+			if (this.spell == 470) {
 				for (Peleador target : cibles) {
-					if (target.getTeam() == caster.getTeam())
-						continue;
-					target.addBuff(effectID, 0, turns, 0, true, spell, args, caster, true);//on applique un buff
+					if (target.getTeam() == this.caster.getTeam()) continue;
+					target.addBuff(effectID, 0, turns, 0, true, spell, args, caster, true);
 				}
 			}
 			for (Peleador target : cibles) {
-				target.addBuff(effectID, 0, turns, 0, true, spell, args, caster, true);//on applique un buff
+				target.addBuff(effectID, 0, turns, 0, true, spell, args, caster, true);
 			}
 		}
 	}
@@ -3056,34 +3009,26 @@ public class EfectoHechizo {
 		boolean repetibles = false;
 		int lostPA = 0;
 		for (Peleador target : cibles) {
-			if (spell == 89 && target.getTeam() != caster.getTeam()) {
-				continue;
-			}
-			if (spell == 101 && target != caster) {
-				continue;
-			}
-			if (spell == 115) {// odorat
+			if (this.spell == 89 && target.getTeam() != this.caster.getTeam() || this.spell == 101 && target != this.caster) continue;
+			if (this.spell == 115) {
 				if (!repetibles) {
-					lostPA = Formulas.getRandomJet(jet);
-					if (lostPA == -1)
-						continue;
-					value = lostPA;
+					lostPA = Formulas.getRandomJet(this.caster, target, this.jet);
+					if (lostPA == -1) continue;
+					this.value = lostPA;
 				}
 				target.addBuff(effectID, value, turns, turns, true, spell, args, caster, true);
 				repetibles = true;
-				if (target.canPlay() && target == caster)
-					target.setCurPa(fight, val);
-				GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, effectID, caster.getId()
-						+ "", target.getId() + "," + val + "," + turns);
+				if (target.canPlay() && target == this.caster) {
+					target.setCurPa(fight, this.value);
+				}
+				GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(fight, 7, this.effectID, "" + this.caster.getId() + "", "" + target.getId() + "," + this.value + "," + this.turns);
 				continue;
 			}
 
-			if (spell == 101)
-				//Arreglo ruleta
-				turns = 0;
-			if (spell == 521)// ruse kistoune
-				if (target.getTeam2() != caster.getTeam2())
-					continue;
+			if (this.spell == 101) {
+				this.turns = 0;
+			}
+			if (this.spell == 521 && target.getTeam2() != this.caster.getTeam2()) continue;
 			target.addBuff(effectID, val, turns, 1, true, spell, args, caster, true);
 			//Gain de PA pendant le tour de jeu
 			if (target.canPlay() && target == caster)
@@ -5278,9 +5223,21 @@ public class EfectoHechizo {
 		}
 	}
 
-	//Proximo reemplazo para verificar trampas pisadas
-	public static void VerificarTrampa(Pelea pelea, Peleador peleador)
-	{
+	public static void VerificarTrampa(Pelea pelea, Peleador peleador) {
 		new ArrayList<>(pelea.getAllTraps()).stream().filter(trap -> Camino.getDistanceBetween(pelea.getMap(),trap.getCelda().getId(),peleador.getCell().getId())<=trap.getSize()).forEach(trap -> trap.onTrampa(peleador));
+	}
+
+	private void checkLifeTree(Peleador target, int value) {
+		if (target.hasBuff(786)) {
+			if (value + this.caster.getPdv() > this.caster.getPdvMax()) {
+				value = this.caster.getPdvMax() - this.caster.getPdv();
+			}
+			this.caster.removePdv(this.caster, - value);
+			GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(target.getFight(), 7, 100, "" + target.getId() + "", "" + this.caster.getId() + ",+" + value);
+		}
+	}
+
+	public boolean isPoison() {
+		return this.spell == 66 || this.spell == 164 || this.spell == 71 || this.spell == 196 || this.spell == 219 || this.spell == 181 || this.spell == 200;
 	}
 }

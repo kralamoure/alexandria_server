@@ -8,6 +8,7 @@ import org.alexandria.comunes.gestorsql.Database;
 import org.alexandria.estaticos.juego.accion.AccionIntercambiar;
 import org.alexandria.estaticos.juego.mundo.Mundo;
 import org.alexandria.estaticos.objeto.ObjetoJuego;
+import org.alexandria.otro.Accion;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -170,6 +171,7 @@ public class Cofres {
     }
 
     public void Lock(Jugador P) {
+        P.setExchangeAction(new AccionIntercambiar<Cofres>(AccionIntercambiar.LOCK_TRUNK, this));
         GestorSalida.GAME_SEND_KODE(P, "CK1|8");
     }
 

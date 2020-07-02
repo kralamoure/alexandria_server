@@ -8,7 +8,7 @@ import java.sql.PreparedStatement
 import java.sql.SQLException
 
 class DatosGremio(dataSource: HikariDataSource?) :
-    AbstractDAO<Gremio?>(dataSource!!) {
+    AbstractDAO<Gremio>(dataSource!!) {
     override fun load(obj: Any?) {
         var result: Result? = null
         try {
@@ -35,35 +35,19 @@ class DatosGremio(dataSource: HikariDataSource?) :
         }
     }
 
-    override fun update(obj: Gremio?): Boolean {
+    override fun update(obj: Gremio): Boolean {
         var p: PreparedStatement? = null
         try {
             p =
                 getPreparedStatement("UPDATE `world.entity.guilds` SET `lvl` = ?, `xp` = ?, `capital` = ?, `maxCollectors` = ?, `spells` = ?, `stats` = ? WHERE id = ?;")
-            if (obj != null) {
-                p!!.setInt(1, obj.lvl)
-            }
-            if (obj != null) {
-                p?.setLong(2, obj.xp)
-            }
-            if (obj != null) {
-                p?.setInt(3, obj.capital)
-            }
-            if (obj != null) {
-                p?.setInt(4, obj.nbCollectors)
-            }
-            if (obj != null) {
-                p?.setString(5, obj.compileSpell())
-            }
-            if (obj != null) {
-                p?.setString(6, obj.compileStats())
-            }
-            if (obj != null) {
-                p?.setInt(7, obj.id)
-            }
-            if (p != null) {
-                execute(p)
-            }
+            p!!.setInt(1, obj.lvl)
+            p.setLong(2, obj.xp)
+            p.setInt(3, obj.capital)
+            p.setInt(4, obj.nbCollectors)
+            p.setString(5, obj.compileSpell())
+            p.setString(6, obj.compileStats())
+            p.setInt(7, obj.id)
+            execute(p)
             return true
         } catch (e: SQLException) {
             super.sendError("GuildData update", e)

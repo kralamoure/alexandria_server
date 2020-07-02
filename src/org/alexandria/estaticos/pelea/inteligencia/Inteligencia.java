@@ -9,8 +9,7 @@ public interface Inteligencia {
     Peleador getFighter();
     boolean isStop();
     void setStop(boolean stop);
-    void addNext(Runnable runnable, Integer time);
-
+    void addNext(Runnable var1, Integer var2);
     void apply();
     void endTurn();
 }

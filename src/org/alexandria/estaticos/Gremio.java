@@ -1,5 +1,6 @@
 package org.alexandria.estaticos;
 
+import org.alexandria.comunes.gestorsql.dinamicos.datos.DatosGremio;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.alexandria.estaticos.cliente.Jugador;
@@ -177,8 +178,9 @@ public class Gremio {
     }
 
     private void decompileSpell(String spells) {
-        for (String split : spells.split("\\|"))
+        for (String split : spells.split("\\|")) {
             this.spells.put(Integer.parseInt(split.split(";")[0]), Mundo.mundo.getSort(Integer.parseInt(split.split(";")[0])).getStatsByLevel(Integer.parseInt(split.split(";")[1])));
+        }
     }
 
     public String compileSpell() {

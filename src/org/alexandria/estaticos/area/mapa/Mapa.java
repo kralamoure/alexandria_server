@@ -1,5 +1,6 @@
 package org.alexandria.estaticos.area.mapa;
 
+import org.alexandria.otro.utilidad.Temporizador;
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.Node;
 import org.nfunk.jep.ParseException;
@@ -31,7 +32,6 @@ import org.alexandria.estaticos.pelea.Peleador;
 import org.alexandria.estaticos.pelea.arena.DeathMatch;
 import org.alexandria.estaticos.pelea.arena.TeamMatch;
 import org.alexandria.otro.utilidad.Doble;
-import org.alexandria.otro.utilidad.Temporizador;
 import org.alexandria.estaticos.Npc.*;
 
 import java.time.Instant;
@@ -133,6 +133,7 @@ public class Mapa {
     private boolean isMute = false;
     private SubArea subArea;
     private Cercados mountPark;
+    private CellCacheImpl cellCache;
     private List<GameCase> cases = new ArrayList<>();
     private List<Pelea> fights = new ArrayList<>();
     private ArrayList<Monstruos.MobGrade> mobPossibles = new ArrayList<>();
@@ -266,6 +267,14 @@ public class Mapa {
         this.maxSize = maxSize;
         this.minSize = minSize;
         this.fixSize = fixSize;
+    }
+
+    public void setCellCache(CellCacheImpl cache) {
+        this.cellCache = cache;
+    }
+
+    public CellCacheImpl getCellCache() {
+        return this.cellCache;
     }
 
     public static void removeMountPark(int guildId) {

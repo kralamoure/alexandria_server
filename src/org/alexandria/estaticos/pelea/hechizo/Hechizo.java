@@ -11,20 +11,20 @@ import org.alexandria.estaticos.pelea.Peleador;
 import org.alexandria.estaticos.pelea.Retos;
 import org.alexandria.estaticos.area.mapa.Mapa.GameCase;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class Hechizo {
 
-    private final String nombre;
-    private final int spellID;
+    private String nombre;
+    private int spellID;
     private int spriteID;
     private String spriteInfos;
-    private final Map<Integer, SortStats> sortStats = new HashMap<>();
-    private final ArrayList<Integer> effectTargets = new ArrayList<>();
-    private final ArrayList<Integer> CCeffectTargets = new ArrayList<>();
+    private Map<Integer, SortStats> sortStats = new HashMap<>();
+    private ArrayList<Integer> effectTargets = new ArrayList<>();
+    private ArrayList<Integer> CCeffectTargets = new ArrayList<>();
+    private List<Byte> invalidStates;
+    private List<Byte> neededStates;
     private int type, duration;
 
     public Hechizo(int aspellID, String aNombre, int aspriteID,
@@ -136,27 +136,50 @@ public class Hechizo {
         return duration;
     }
 
+    public boolean hasInvalidState(Peleador fighter) {
+        if (this.invalidStates != null) {
+            for (Byte invalidState : this.invalidStates) {
+                byte state = invalidState.byteValue();
+                if (!fighter.haveState(state)) continue;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasNeededState(Peleador fighter) {
+        boolean ok = true;
+        if (this.neededStates != null) {
+            for (Byte neededState : this.neededStates) {
+                byte state = neededState.byteValue();
+                if (fighter.haveState(state)) continue;
+                ok = false;
+            }
+        }
+        return ok;
+    }
+
     public static class SortStats {
 
-        private final int spellID;
-        private final int level;
-        private final int PACost;
-        private final int minPO;
-        private final int maxPO;
-        private final int TauxCC;
-        private final int TauxEC;
-        private final boolean isLineLaunch;
-        private final boolean hasLDV;
-        private final boolean isEmptyCell;
-        private final boolean isModifPO;
-        private final int maxLaunchbyTurn;
-        private final int maxLaunchbyByTarget;
-        private final int coolDown;
-        private final int reqLevel;
-        private final boolean isEcEndTurn;
-        private final ArrayList<EfectoHechizo> effects;
-        private final ArrayList<EfectoHechizo> CCeffects;
-        private final String porteeType;
+        private int spellID;
+        private int level;
+        private int PACost;
+        private int minPO;
+        private int maxPO;
+        private int TauxCC;
+        private int TauxEC;
+        private boolean isLineLaunch;
+        private boolean hasLDV;
+        private boolean isEmptyCell;
+        private boolean isModifPO;
+        private int maxLaunchbyTurn;
+        private int maxLaunchbyByTarget;
+        private int coolDown;
+        private int reqLevel;
+        private boolean isEcEndTurn;
+        private ArrayList<EfectoHechizo> effects;
+        private ArrayList<EfectoHechizo> CCeffects;
+        private String porteeType;
 
         public SortStats(int AspellID, int Alevel, int cost, int minPO,
                          int maxPO, int tauxCC, int tauxEC, boolean isLineLaunch,

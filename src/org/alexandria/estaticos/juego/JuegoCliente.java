@@ -1,5 +1,6 @@
 package org.alexandria.estaticos.juego;
 
+import org.alexandria.otro.utilidad.Temporizador;
 import org.apache.mina.core.session.IoSession;
 import org.alexandria.estaticos.*;
 import org.alexandria.estaticos.Mercadillo.*;
@@ -48,7 +49,6 @@ import org.alexandria.estaticos.pelea.Peleador;
 import org.alexandria.estaticos.pelea.hechizo.Hechizo;
 import org.alexandria.otro.utilidad.GeneradorNombres;
 import org.alexandria.otro.utilidad.Doble;
-import org.alexandria.otro.utilidad.Temporizador;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.alexandria.estaticos.Mascota.MascotaEntrada;
@@ -3743,14 +3743,14 @@ public class JuegoCliente {
                 gameAggro(packet);
                 break;
 
-            case 909://Collector
+            case 909://Recaudador
                 if (MainServidor.INSTANCE.getFightAsBlocked())
                     return;
                 long calcul = Instant.now().toEpochMilli() - Configuracion.INSTANCE.getStartTime();
-                if(calcul < 600000) {
+                /*if(calcul < 600000) {
                     this.player.sendMessage("Vous devez attendre encore " + ((600000 - calcul) / 60000) + " minute(s).");
                     return;
-                }
+                }*/
                 gameCollector(packet);
                 break;
 

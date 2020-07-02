@@ -79,7 +79,7 @@ public class IA27 extends NecesitaHechizo {
             }
 
             if(this.fighter.getCurPa(this.fight) == 0 && this.fighter.getCurPm(this.fight) == 0) this.stop = true;
-            addNext(this::decrementCount, time);
+            this.addNext(this::decrementCount, time);
         } else {
             this.stop = true;
         }

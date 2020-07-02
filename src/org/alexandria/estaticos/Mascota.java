@@ -184,48 +184,60 @@ public class Mascota {
 
     public boolean canEat(int Tid, int categID, int monsterId) {
         if (this.type == 1) {
-            for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet())
-                for (Map<Integer, Integer> entry : ID.getValue())
-                    for (Entry<Integer, Integer> monsterEntry : entry.entrySet())
-                        if (monsterEntry.getKey() == monsterId)
-                            return true;
-            return false;
-        } else if (this.type == 2) {
-            for (Entry<Integer, ArrayList<Integer>> ID : this.template.entrySet())
-                if (ID.getValue().contains(Tid))
-                    return true;
-            return false;
-        } else if (this.type == 3) {
-            for (Entry<Integer, ArrayList<Integer>> ID : this.categ.entrySet())
-                if (ID.getValue().contains(categID))
-                    return true;
-            return false;
-        } else {
+            for (Map.Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet()) {
+                for (Map<Integer, Integer> entry : ID.getValue()) {
+                    for (Map.Entry<Integer, Integer> monsterEntry : entry.entrySet()) {
+                        if (monsterEntry.getKey() != monsterId) continue;
+                        return true;
+                    }
+                }
+            }
             return false;
         }
+        if (this.type == 2) {
+            for (Map.Entry<Integer, ArrayList<Integer>> ID : this.template.entrySet()) {
+                if (!ID.getValue().contains(Tid)) continue;
+                return true;
+            }
+            return false;
+        }
+        if (this.type == 3) {
+            for (Map.Entry<Integer, ArrayList<Integer>> ID : this.categ.entrySet()) {
+                if (!ID.getValue().contains(categID)) continue;
+                return true;
+            }
+            return false;
+        }
+        return false;
     }
 
     public int statsIdByEat(int Tid, int categID, int monsterId) {
         if (this.type == 1) {
-            for (Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet())
-                for (Map<Integer, Integer> entry : ID.getValue())
-                    for (Entry<Integer, Integer> monsterEntry : entry.entrySet())
-                        if (monsterEntry.getKey() == monsterId)
-                            return ID.getKey();
-            return 0;
-        } else if (this.type == 2) {
-            for (Entry<Integer, ArrayList<Integer>> ID : this.template.entrySet())
-                if (ID.getValue().contains(Tid))
-                    return ID.getKey();
-            return 0;
-        } else if (this.type == 3) {
-            for (Entry<Integer, ArrayList<Integer>> ID : this.categ.entrySet())
-                if (ID.getValue().contains(categID))
-                    return ID.getKey();
-            return 0;
-        } else {
+            for (Map.Entry<Integer, ArrayList<Map<Integer, Integer>>> ID : this.monster.entrySet()) {
+                for (Map<Integer, Integer> entry : ID.getValue()) {
+                    for (Map.Entry<Integer, Integer> monsterEntry : entry.entrySet()) {
+                        if (monsterEntry.getKey() != monsterId) continue;
+                        return ID.getKey();
+                    }
+                }
+            }
             return 0;
         }
+        if (this.type == 2) {
+            for (Map.Entry<Integer, ArrayList<Integer>> ID : this.template.entrySet()) {
+                if (!ID.getValue().contains(Tid)) continue;
+                return ID.getKey();
+            }
+            return 0;
+        }
+        if (this.type == 3) {
+            for (Map.Entry<Integer, ArrayList<Integer>> ID : this.categ.entrySet()) {
+                if (!ID.getValue().contains(categID)) continue;
+                return ID.getKey();
+            }
+            return 0;
+        }
+        return 0;
     }
 
     public Map<Integer, String> generateNewtxtStatsForPets() {
@@ -259,6 +271,7 @@ public class Mascota {
         private long lastEatDate;
         private int cantidadcomida;
         private int pdv;
+        private int Poids;
         private int corpulencia;
         private final boolean isEupeoh;
 
@@ -324,50 +337,40 @@ public class Mascota {
         }
 
         public int parseCorpulence() {
-            if (corpulencia != 0)
+            if (this.corpulencia > 0 || this.corpulencia < 0) {
                 return 7;
+            }
             return 0;
         }
 
         public int getCurrentStatsPoids() {
-            /*
-             * d6,d5,d4,d3,d2 = 4U de poids 8a = 2U de poids 7c = 2U de poids POUR
-             * PETIT WABBIT = 3U de poids b2 = 8U de poids 70 = 8U de poids le reste
-             * a 1U de poids
-             */
             ObjetoJuego obj = Mundo.getGameObject(this.objetoid);
-            if (obj == null)
+            if (obj == null) {
                 return 0;
-            int cumul = 0;
-            for (Entry<Integer, Integer> entry : obj.getCaracteristicas().getEffects().entrySet()) {
-                if (entry.getKey() == Integer.parseInt("320", 16)) // Vita du familier
-                {
-                }
-                else if (entry.getKey() == Integer.parseInt("326", 16)) // Poids du familier
-                {
-                }
-                else if (entry.getKey() == Integer.parseInt("328", 16)) // Date du familier
-                {
-                }
-                else if (entry.getKey() == Integer.parseInt("8a", 16)) // %dom
-                    cumul = cumul + (2 * entry.getValue());
-                else if (entry.getKey() == Integer.parseInt("7c", 16)) // sagesse
-                    cumul = cumul + (3 * entry.getValue());
-                else if (entry.getKey() == Integer.parseInt("d2", 16)
-                        || entry.getKey() == Integer.parseInt("d3", 16)
-                        || entry.getKey() == Integer.parseInt("d4", 16)
-                        || entry.getKey() == Integer.parseInt("d5", 16)
-                        || entry.getKey() == Integer.parseInt("d6", 16)) // %resist
-                    cumul = cumul + (4 * entry.getValue());
-                else if (entry.getKey() == Integer.parseInt("b2", 16)
-                        || entry.getKey() == Integer.parseInt("70", 16)) // soin et dommages
-                    cumul = cumul + (8 * entry.getValue());
-                else
-                    cumul = cumul + (entry.getValue());
-
             }
-            int poids = cumul;
-            return poids;
+            int cumul = 0;
+            for (Map.Entry<Integer, Integer> entry : obj.getCaracteristicas().getEffects().entrySet()) {
+                if (entry.getKey() == Integer.parseInt("320", 16) || entry.getKey() == Integer.parseInt("326", 16) || entry.getKey() == Integer.parseInt("328", 16)) continue;
+                if (entry.getKey() == Integer.parseInt("8a", 16)) {
+                    cumul += 2 * entry.getValue();
+                    continue;
+                }
+                if (entry.getKey() == Integer.parseInt("7c", 16)) {
+                    cumul += 3 * entry.getValue();
+                    continue;
+                }
+                if (entry.getKey() == Integer.parseInt("d2", 16) || entry.getKey() == Integer.parseInt("d3", 16) || entry.getKey() == Integer.parseInt("d4", 16) || entry.getKey() == Integer.parseInt("d5", 16) || entry.getKey() == Integer.parseInt("d6", 16)) {
+                    cumul += 4 * entry.getValue();
+                    continue;
+                }
+                if (entry.getKey() == Integer.parseInt("b2", 16) || entry.getKey() == Integer.parseInt("70", 16)) {
+                    cumul += 8 * entry.getValue();
+                    continue;
+                }
+                cumul += entry.getValue().intValue();
+            }
+            this.Poids = cumul;
+            return this.Poids;
         }
 
         public int getMaxStat() {

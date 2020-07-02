@@ -48,8 +48,8 @@ class JuegoHandler : IoHandler {
 
     @Throws(Exception::class)
     override fun sessionClosed(arg0: IoSession) {
-        val client = arg0.attachment as JuegoCliente
-        client.disconnect()
+        val client = arg0.attachment as JuegoCliente?
+        client?.disconnect()
         if (mostrarenviados) {
             Mundo.mundo.logger.info("Session " + arg0.id + " closed")
         }
@@ -62,9 +62,9 @@ class JuegoHandler : IoHandler {
                     arg1.message!!.startsWith("Connection reset by peer") || arg1.message!!.startsWith("Connection timed out"))
         ) return
         arg1.printStackTrace()
-        val client = arg0.attachment as JuegoCliente
+        val client = arg0.attachment as JuegoCliente?
         if (mostrarenviados) {
-            client.logger.info("Exception connexion client : " + arg1.message)
+            client?.logger?.info("Exception connexion client : " + arg1.message)
         }
         kick(arg0)
     }
@@ -107,7 +107,7 @@ class JuegoHandler : IoHandler {
     }
 
     private fun kick(arg0: IoSession) {
-        val client = arg0.attachment as JuegoCliente
+        val client = arg0.attachment as JuegoCliente?
         if (client != null) {
             client.kick()
             arg0.attachment = null

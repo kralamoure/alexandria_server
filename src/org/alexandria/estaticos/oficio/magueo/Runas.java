@@ -72,6 +72,20 @@ public class Runas {
     }
 
     public byte[] getChance() {
-        return this.weight <= 1 ? new byte[] {66, 34, 0} : new byte[] {43, 50, 7};
+        byte[] arrby;
+        if (this.weight <= 1.0f) {
+            byte[] arrby2 = new byte[3];
+            arrby2[0] = 66;
+            arrby2[1] = 34;
+            arrby = arrby2;
+            arrby2[2] = 0;
+        } else {
+            byte[] arrby3 = new byte[3];
+            arrby3[0] = 43;
+            arrby3[1] = 50;
+            arrby = arrby3;
+            arrby3[2] = 7;
+        }
+        return arrby;
     }
 }

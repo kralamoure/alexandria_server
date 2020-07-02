@@ -27,6 +27,8 @@ class AccionIntercambiar<T>(val type: Byte, val value: T) {
         const val IN_TUTORIAL: Byte = 21
         const val FORGETTING_SPELL: Byte = 22
         const val CRAFTING_BOOK: Byte = 23
+        const val LOCK_TRUNK: Byte = 24
+        const val LOCK_HOUSE: Byte = 25
     }
 
 }

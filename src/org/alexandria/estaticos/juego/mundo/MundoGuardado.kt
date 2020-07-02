@@ -66,7 +66,7 @@ class MundoGuardado private constructor() : Updatable(1800000) {
                 ) Database.estaticos.prismData?.delete(prism.id) else Database.estaticos
                     .prismData?.update(prism)
                 Mundo.mundo.logger.info("-> gremios.")
-                Mundo.mundo.guilds.values.forEach(Consumer { guild: Gremio? ->
+                Mundo.mundo.guilds.values.forEach(Consumer { guild: Gremio ->
                     Database.dinamicos.guildData?.update(guild)
                 })
                 Mundo.mundo.logger.info("-> recaudadores.")

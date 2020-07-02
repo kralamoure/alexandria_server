@@ -11,6 +11,7 @@ import org.alexandria.estaticos.juego.mundo.Mundo;
 import org.alexandria.estaticos.pelea.Pelea;
 import org.alexandria.estaticos.pelea.Peleador;
 import org.alexandria.estaticos.pelea.hechizo.EfectoHechizo;
+import org.alexandria.estaticos.pelea.hechizo.Hechizo;
 import org.alexandria.estaticos.pelea.hechizo.Hechizo.SortStats;
 import org.alexandria.estaticos.pelea.hechizo.LanzarHechizo;
 import org.alexandria.estaticos.pelea.trampas.Grifos;
@@ -175,6 +176,189 @@ public class Funcion {
         if (attack != 0)
             return attack;
         return 0;
+    }
+
+    private boolean cellAvailable(Pelea fight, GameCase cell) {
+        if (cell.getFirstFighter() != null) return false;
+        if (!cell.isWalkable(true, true, cell.getId())) return false;
+        if (fight.getAllTraps().stream().filter(t -> t.getCelda().getId() == cell.getId()).count() != 0) return false;
+        return true;
+    }
+
+    public List<GameCase> getCellsAvailableAround(Pelea fight, GameCase launch, boolean once, byte iteration) {
+        ArrayList<GameCase> cells = new ArrayList<GameCase>();
+        ArrayList<GameCase> available = new ArrayList<GameCase>();
+        char[] dirs = new char[]{'b', 'd', 'f', 'h'};
+        if (fight == null) {
+            return cells;
+        }
+        for (int dir : dirs) {
+            GameCase cell = fight.getMap().getCase(Camino.GetCaseIDFromDirrection(launch.getId(), (char)dir, fight.getMap(), true));
+            if (cell != null && this.cellAvailable(fight, cell)) {
+                available.add(cell);
+            }
+            if (once) continue;
+            cells.add(cell);
+        }
+        if (!once) {
+            for (GameCase c : cells) {
+                for (char dir : dirs) {
+                    GameCase cell = fight.getMap().getCase(Camino.GetCaseIDFromDirrection(c.getId(), dir, fight.getMap(), true));
+                    if (cell == null || !this.cellAvailable(fight, cell)) continue;
+                    available.add(cell);
+                }
+            }
+        }
+        return available;
+    }
+
+    public List<GameCase> getCellsAvailableAround(Peleador target, boolean once, byte iteration) {
+        return this.getCellsAvailableAround(target.getFight(), target.getCell(), once, iteration);
+    }
+
+    public boolean moveToAttack(Pelea fight, Peleador caster, Peleador target, Hechizo.SortStats spell) {
+        return target != null && this.moveToAttack(fight, caster, target.getCell(), spell);
+    }
+
+    public boolean moveToAttack(Pelea fight, Peleador caster, GameCase cellTarget, Hechizo.SortStats spell) {
+        int id;
+        ArrayList<GameCase> path;
+        if (fight == null || caster == null || spell == null || caster.getCurPm(fight) <= 0) {
+            return false;
+        }
+        Mapa map = fight.getMap();
+        GameCase cell = caster.getCell();
+        if (map == null || cell == null || cellTarget == null) {
+            return false;
+        }
+        if (fight.canCastSpell1(caster, spell, cell, cellTarget.getId()) || !fight.canLaunchSpell(caster, spell, cellTarget) || Camino.isNextTo(map, cell.getId(), cellTarget.getId())) {
+            return false;
+        }
+        int dist = Camino.getDistanceBetweenTwoCase(fight.getMap(), cell, cellTarget);
+        if (dist < spell.getMinPO()) {
+            int count = 0;
+            GameCase temp = cell;
+            do {
+                List<GameCase> cells;
+                if (!(cells = this.getCellsAvailableAround(fight, temp, true, (byte) 0)).isEmpty()) {
+                    for (GameCase c : cells) {
+                        int tmpDist = Camino.getDistanceBetweenTwoCase(fight.getMap(), c, cellTarget);
+                        if (tmpDist <= dist || !fight.canCastSpell1(caster, spell, c, cellTarget.getId())) continue;
+                        temp = c;
+                        dist = tmpDist;
+                        break;
+                    }
+                }
+                count = (byte)(count + 1);
+            } while (dist < spell.getMinPO() && count < 30);
+            if (temp != cell && fight.canCastSpell1(caster, spell, temp, cellTarget.getId())) {
+                return this.moveToCell(fight, caster, cell, temp);
+            }
+        }
+        ArrayList<GameCase> finalPath = new ArrayList<GameCase>();
+        if (spell.isLineLaunch() && Camino.casesAreInSameLine(fight.getMap(), cell.getId(), cellTarget.getId(), 'z', spell.getMaxPO()) && (id = this.getCellToBeInTheSameLine(fight, spell, cell.getId(), cellTarget.getId())) != -1) {
+            cellTarget = fight.getMap().getCase(id);
+        }
+        if ((path = new IACamino(fight.getMapOld(), fight, cell.getId(), cellTarget.getId()).getShortestPath(-1)) == null || path.isEmpty()) {
+            return false;
+        }
+        GameCase stop = null;
+        for (GameCase c : path) {
+            int distance = Camino.getDistanceBetween(fight.getMap(), cellTarget.getId(), c.getId());
+            if (distance > spell.getMaxPO() || !fight.canCastSpell1(caster, spell, c, cellTarget.getId())) continue;
+            stop = c;
+            break;
+        }
+        for (int a = 0; a < caster.getCurPm(fight); a++)
+        {
+            GameCase next = path.get((int)a);
+            finalPath.add(next);
+            if (stop != null && next.getId() == stop.getId()) break;
+        }
+        String str = "";
+        try {
+            int curCell = cell.getId();
+            boolean curDir = false;
+            for (GameCase c : finalPath) {
+                char dir = Camino.getDirBetweenTwoCase(curCell, c.getId(), map, true);
+                if (dir == '\u0000') {
+                    return false;
+                }
+                if (finalPath.indexOf(c) != 0) {
+                    str = (String)str + Mundo.mundo.getCryptManager().idceldaCodigo(curCell);
+                }
+                str = (String)str + dir;
+                curCell = c.getId();
+            }
+            if (curCell != cell.getId()) {
+                str = (String)str + Mundo.mundo.getCryptManager().idceldaCodigo(curCell);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        AccionJuego GA = new AccionJuego(0, 1, "");
+        GA.args = str;
+        return fight.onFighterDeplace(caster, GA);
+    }
+
+    public int getCellToBeInTheSameLine(Pelea fight, Hechizo.SortStats spell, int cellStart, int cellEnd) {
+        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
+        for (char c : new char[]{'b', 'd', 'f', 'h'}) {
+            ArrayList<Integer> cells = new ArrayList<Integer>();
+            int id = Camino.getCaseIDFromDirrection(cellStart, c, fight.getMap());
+            for (int i = 0; i < spell.getMaxPO(); ++i) {
+                GameCase cell = fight.getMap().getCase(id);
+                if (cell.getFirstFighter() != null || !cell.isWalkable(true, true, -1) || id == cellEnd) continue;
+                if (Camino.casesAreInSameLine(fight.getMap(), id, cellEnd, 'z', spell.getMaxPO())) {
+                    if (spell.hasLDV() /*&& !Formulas.checkLos(fight.getMap(), (short)cell.getId(), (short)cellEnd)*/)
+                        cells.add(id);
+                    ((List<Integer>) map).addAll((short)cells.size(), cells);
+                }
+                cells.add(id);
+                id = Camino.getCaseIDFromDirrection(cell.getId(), c, fight.getMap());
+            }
+        }
+        short size = 99;
+        int chooseCell = -1;
+        for (Map.Entry entry : map.entrySet()) {
+            if ((Short)entry.getKey() >= size) continue;
+            size = (Short)entry.getKey();
+            chooseCell = (Integer)((List)entry.getValue()).get(((List)entry.getValue()).size() - 1);
+        }
+        return chooseCell;
+    }
+
+    public boolean moveToCell(Pelea fight, Peleador fighter, GameCase cell, GameCase cellTarget) {
+        ArrayList<GameCase> path = new IACamino(fight.getMapOld(), fight, cell.getId(), cellTarget.getId()).getShortestPath(-1);
+        if (path == null || path.isEmpty()) {
+            return false;
+        }
+        String str = "";
+        try {
+            int curCell = cell.getId();
+            boolean curDir = false;
+            for (GameCase c : path) {
+                char dir = Camino.getDirBetweenTwoCase(curCell, c.getId(), fight.getMap(), true);
+                if (dir == '\u0000') {
+                    return false;
+                }
+                if (path.indexOf(c) != 0) {
+                    str = str + Mundo.mundo.getCryptManager().idceldaCodigo(curCell);
+                }
+                str = str + dir;
+                curCell = c.getId();
+            }
+            if (curCell != cell.getId()) {
+                str = str + Mundo.mundo.getCryptManager().idceldaCodigo(curCell);
+            }
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        AccionJuego GA = new AccionJuego(0, 1, "");
+        GA.args = str;
+        return fight.onFighterDeplace(fighter, GA);
     }
 
     public int moveToAttackIfPossibleAll(Pelea fight, Peleador fighter)
@@ -2171,8 +2355,22 @@ public class Funcion {
         return curF;
     }
 
-    public Peleador getNearestEnnemy(Pelea fight, Peleador fighter)
-    {
+    public Peleador getNearestEnnemy(Pelea fight, Peleador fighter, boolean invocation) {
+        if (fight == null || fighter == null) {
+            return null;
+        }
+        int dist = 1000;
+        Peleador curF = null;
+        for (Peleador f : fight.getFighters(3)) {
+            int d;
+            if (f.isDead() || !invocation && f.isInvocation() || f.isHide() || f.getTeam2() == fighter.getTeam2() || (d = Camino.getDistanceBetween(fight.getMap(), fighter.getCell().getId(), f.getCell().getId())) >= dist) continue;
+            dist = d;
+            curF = f;
+        }
+        return curF;
+    }
+
+    public Peleador getNearestEnnemy(Pelea fight, Peleador fighter) {
         if (fight == null || fighter == null)
             return null;
         int dist = 1000;
@@ -3516,6 +3714,55 @@ public class Funcion {
                 infTot += inf;
         }
         return infTot;
+    }
+
+    public Hechizo.SortStats getSpellByPo(Peleador caster, int po) {
+        Hechizo.SortStats spell = null;
+        int maxPo = 0;
+        for (Hechizo.SortStats tmp : caster.getMob().getSpells().values()) {
+            if (tmp == null || tmp.getMaxPO() <= maxPo || tmp.getMaxPO() > po) continue;
+            spell = tmp;
+            maxPo = tmp.getMaxPO();
+        }
+        return spell;
+    }
+
+    public Peleador getEnnemyWithDistance(Pelea fight, Peleador fighter, int min, int max, List<Peleador> fighters) {
+        if (fight == null || fighter == null) {
+            return null;
+        }
+        Peleador target = null;
+        for (int i = 0; (i == 0 || i == 1) && target == null; i = (int)((byte)(i + 1))) {
+            for (Peleador f : fight.getFighters(3)) {
+                int distance;
+                if (i == 0 && (f.isInvocation() && !fighter.isInvocation() || f.isStatique) || f.isDead() || fighters != null && fighters.contains(f) || f.isHide() || f.getTeam2() == fighter.getTeam2() || (distance = Camino.getDistanceBetween(fight.getMap(), fighter.getCell().getId(), f.getCell().getId())) >= max || distance <= min) continue;
+                max = distance;
+                target = f;
+            }
+        }
+        return target;
+    }
+
+    public int tryCastSpell(Pelea fight, Peleador fighter, Peleador target, int spellId) {
+        if (target == null) {
+            return 10;
+        }
+        return this.tryCastSpell(fight, fighter, target.getCell(), spellId);
+    }
+
+    public int tryCastSpell(Pelea fight, Peleador fighter, GameCase target, int spellId) {
+        if (fight == null || fighter == null || target == null) {
+            return 10;
+        }
+        Hechizo.SortStats spell = Funcion.getInstance().findSpell(fighter, spellId);
+        return fight.tryCastSpell(fighter, spell, target.getId());
+    }
+
+    public boolean tryCastSpell(InteligenciaFacil ia, Peleador target, Hechizo.SortStats spell) {
+        if (ia == null || target == null) {
+            return false;
+        }
+        return ia.getFight().tryCastSpell(ia.getFighter(), spell, target.getCell().getId()) == 0;
     }
 
 }

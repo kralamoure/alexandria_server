@@ -5,6 +5,7 @@ import org.alexandria.estaticos.cliente.Jugador;
 import org.alexandria.comunes.GestorSalida;
 import org.alexandria.configuracion.Constantes;
 import org.alexandria.comunes.gestorsql.Database;
+import org.alexandria.estaticos.juego.accion.AccionIntercambiar;
 import org.alexandria.estaticos.juego.mundo.Mundo;
 
 import java.util.Map;
@@ -153,6 +154,7 @@ public class Casas {
     }
 
     public void lock(Jugador P) {
+        P.setExchangeAction(new AccionIntercambiar<Casas>(AccionIntercambiar.LOCK_HOUSE, this));
         GestorSalida.GAME_SEND_KODE(P, "CK1|8");
     }
 
@@ -183,28 +185,26 @@ public class Casas {
 
         initRight(); //Remplissage des droits
 
-        Integer[] mapKey = haveRight.keySet().toArray(new Integer[0]); //R�cup�re les clef de map dans un tableau d'Integer
-
-        while (total > 0) {
-            int i = haveRight.size() - 1;
-            while (i < haveRight.size()) {
-                if (mapKey[i] <= total) {
-                    total ^= mapKey[i];
-                    haveRight.put(mapKey[i], true);
-                    break;
-                }
-                i--;
+        Integer[] mapKey = this.haveRight.keySet().toArray(new Integer[this.haveRight.size()]);
+        block0 : while (total > 0) {
+            for (int i = this.haveRight.size() - 1; i < this.haveRight.size(); --i) {
+                int map = mapKey[i];
+                if (map > total) continue;
+                total ^= map;
+                this.haveRight.put(map, true);
+                continue block0;
             }
         }
     }
 
-    public static class GestorCasas {
+
+public static class GestorCasas {
 
         public Casas getHouseIdByCoord(int map_id, int cell_id) {
-            for (Map.Entry<Integer, Casas> house : Mundo.mundo.getHouses().entrySet())
-                if (house.getValue().getMapId() == map_id
-                        && house.getValue().getCellId() == cell_id)
+            for (Map.Entry<Integer, Casas> house : Mundo.mundo.getHouses().entrySet()){
+                if (house.getValue().getMapId() != map_id || house.getValue().getCellId() != cell_id) continue;
                     return house.getValue();
+            }
             return null;
         }
 
@@ -387,9 +387,10 @@ public class Casas {
         }
 
         public boolean alreadyHaveHouse(Jugador P) {
-            for (Map.Entry<Integer, Casas> house : Mundo.mundo.getHouses().entrySet())
-                if (house.getValue().getOwnerId() == P.getAccID())
-                    return true;
+            for (Map.Entry<Integer, Casas> house : Mundo.mundo.getHouses().entrySet()){
+                if (house.getValue().getOwnerId() != P.getAccID()) continue;
+                return true;
+            }
             return false;
         }
 
@@ -431,9 +432,10 @@ public class Casas {
 
         public byte houseOnGuild(int GuildID) {
             byte i = 0;
-            for (Map.Entry<Integer, Casas> house : Mundo.mundo.getHouses().entrySet())
-                if (house.getValue().getGuildId() == GuildID)
-                    i++;
+            for (Map.Entry<Integer, Casas> house : Mundo.mundo.getHouses().entrySet()){
+                if (house.getValue().getGuildId() != GuildID) continue;
+                i = (byte)(i + 1);
+            }
             return i;
         }
 

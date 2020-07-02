@@ -23,7 +23,7 @@ public abstract class NecesitaHechizo extends InteligenciaAbstracta {
         this.highests = NecesitaHechizo.getListSpellOf(fighter, "HIGHEST");
     }
 
-    private static List<SortStats> getListSpellOf(Peleador fighter, String type) {
+    static List<SortStats> getListSpellOf(Peleador fighter, String type) {
         final List<SortStats> spells = new ArrayList<>();
 
         for(SortStats spell : fighter.getMob().getSpells().values()) {
@@ -42,10 +42,8 @@ public abstract class NecesitaHechizo extends InteligenciaAbstracta {
                     if(spell.getSpell().getType() == 0) {
                         boolean effect = false;
                         for(EfectoHechizo spellEffect : spell.getEffects())
-                            if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6) {
+                            if(spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
                                 effect = true;
-                                break;
-                            }
                         if(!effect && spell.getMaxPO() < 3) spells.add(spell);
                     }
                     break;
@@ -53,10 +51,8 @@ public abstract class NecesitaHechizo extends InteligenciaAbstracta {
                     if(spell.getSpell().getType() == 0) {
                         boolean effect = false;
                         for(EfectoHechizo spellEffect : spell.getEffects())
-                            if (spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6) {
+                            if(spellEffect.getEffectID() == 4 || spellEffect.getEffectID() == 6)
                                 effect = true;
-                                break;
-                            }
                         if(effect && spell.getSpellID() != 805) continue;
                         if(spell.getMaxPO() > 1) spells.add(spell);
                     }

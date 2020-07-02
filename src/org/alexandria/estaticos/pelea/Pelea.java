@@ -1022,8 +1022,8 @@ public class Pelea {
                     if (player.getCurMap().getId() != this.getMapOld().getId()) {
                         player.teleport(this.getMapOld().getId(), this.collector.getCell());
                     }
-                    //Nuevo sistema TimerWaitingPlus
-                    Temporizador.addSiguiente(() -> this.joinCollectorFight(player, collector.getId()), 1000, Temporizador.DataType.CLIENTE);
+
+                    Temporizador.addSiguiente(() -> this.joinCollectorFight(player, collector.getId()), 1000);
                 } else {
                     GestorSalida.GAME_SEND_MESSAGE(player, "Vous n'avez pas pu rejoindre le combat du percepteur suite à votre indisponibilité.");
                     collector.delDefenseFight(player);
@@ -1059,7 +1059,7 @@ public class Pelea {
             }
         }
 
-        if (getType() == Constantes.FIGHT_TYPE_PVT && getCollector() != null)
+        if (getType() == Constantes.FIGHT_TYPE_PVT && this.getCollector() != null)
             getCollector().setInFight((byte) 2);
 
         setState(Constantes.FIGHT_STATE_ACTIVE);
@@ -1678,7 +1678,7 @@ public class Pelea {
             }
 
             if (!this.getCurAction().equals("")) {
-                Temporizador.addSiguiente(() -> this.endTurn(onAction, current), 100, Temporizador.DataType.PELEA);
+                Temporizador.addSiguiente(() -> this.endTurn(onAction, current), 100);
                 return;
             }
 
@@ -1691,7 +1691,7 @@ public class Pelea {
             setCurAction("");
 
             if(onAction)
-                Temporizador.addSiguiente(() -> this.newTurn(current), 2100, Temporizador.DataType.PELEA);
+                Temporizador.addSiguiente(() -> this.newTurn(current), 2100);
             else
                 this.newTurn(current);
         } catch (NullPointerException e) {
@@ -2383,6 +2383,67 @@ public class Pelea {
         }
     }
 
+    public int forceCastSpellMob(Peleador fighter, Hechizo.SortStats spell, int cell) {
+        boolean isEc;
+        Peleador current = this.getFighterByOrdreJeu();
+        GameCase Cell = this.getMap().getCase(cell);
+        if (!this.canCastSpellMob(fighter, spell, Cell, -1)) {
+            return 10;
+        }
+        boolean bl = isEc = spell.getTauxEC() != 0 && Formulas.getRandomValue(1, spell.getTauxEC()) == spell.getTauxEC();
+        if (isEc) {
+            GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 302, "" + fighter.getId() + "", "" + spell.getSpellID() + "");
+        } else {
+            if (!(this.getType() == 0 || this.getAllChallenges().size() <= 0 || current.isInvocation() || current.isDouble() || current.isCollector())) {
+                this.getAllChallenges().values().stream().filter(challenge -> challenge != null).forEach(challenge -> {
+                            challenge.onPlayerAction(current, spell.getSpellID());
+                            if (spell.getSpell().getSpellID() != 0) {
+                                challenge.onPlayerSpell(current, spell);
+                            }
+                        }
+                );
+            }
+            boolean isCC = fighter.testIfCC(spell.getTauxCC(), spell, fighter);
+            String sort = "" + spell.getSpellID() + "," + cell + "," + spell.getSpriteID() + "," + spell.getLevel() + "," + spell.getSpriteInfos();
+            GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 300, "" + fighter.getId() + "", sort);
+            if (isCC) {
+                GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 301, "" + fighter.getId() + "", sort);
+            }
+            if (fighter.isHide()) {
+                if (spell.getSpellID() == 0) {
+                    fighter.unHide(cell);
+                } else {
+                    this.showCaseToAll(fighter.getId(), fighter.getCell().getId());
+                }
+            }
+            spell.applySpellEffectToFight(this, fighter, Cell, isCC, false);
+        }
+        GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 102, "" + fighter.getId() + "", "" + fighter.getId() + ",-" + spell.getPACost());
+        if (!isEc) {
+            fighter.addLaunchedSort(Cell.getFirstFighter(), spell, fighter);
+        }
+        if (isEc && spell.isEcEndTurn()) {
+            Temporizador.addSiguiente(() -> {
+                        this.setCurAction("");
+                    }
+                    , 500);
+            if (fighter.getMob() != null || fighter.isInvocation()) {
+                return 5;
+            }
+            this.endTurn(false, current);
+            return 5;
+        }
+        this.verifIfTeamAllDead();
+        Temporizador.addSiguiente(() -> {
+                    this.setCurAction("");
+                    if (fighter.getPlayer() != null) {
+                        GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 102, "" + fighter.getId() + "", "" + fighter.getId() + ",-0");
+                    }
+                }
+                , 1000);
+        return 0;
+    }
+
     public synchronized int tryCastSpell(Peleador fighter, Hechizo.SortStats spell, int cell) {
         final Peleador current = this.getFighterByOrdreJeu();
 
@@ -2459,33 +2520,24 @@ public class Pelea {
                 }
             }
         } else if (fighter.getMob() != null || fighter.isInvocation()) {
-            Temporizador.addSiguiente(() -> this.setCurAction(""), 600, Temporizador.DataType.PELEA);
+            Temporizador.addSiguiente(() -> this.setCurAction(""), 600);
             return 10;
         }
 
         this.verifIfTeamAllDead();
-        if(fighter.getPlayer()!=null)
-        {
             Temporizador.addSiguiente(() -> {
                 this.setCurAction("");
                 if (fighter.getPlayer() != null) {
                     GestorSalida.GAME_SEND_GA_PACKET_TO_FIGHT(this, 7, 102, fighter.getId() + "", fighter.getId() + ",-0");
                 }
-            }, 1000, Temporizador.DataType.PELEA);
-        }else {
-            try{
-                Thread.sleep(1000);
-            }catch(InterruptedException e){
-                e.printStackTrace();
-            }
-            setCurAction("");
-        }
+                    }
+                    , 1000);
         return 0;
     }
 
     public boolean canCastSpell1(Peleador caster, Hechizo.SortStats spell, GameCase cell, int targetCell) {
         final Peleador current = this.getFighterByOrdreJeu();
-
+        //boolean hasModification;
         if (current == null)
             return false;
 
@@ -2542,7 +2594,6 @@ public class Pelea {
         }
 
         char dir = Camino.getDirBetweenTwoCase(casterCell, cell.getId(), getMap(), true);
-
         if (spell.getSpellID() == 67) {
             if (!Camino.checkLoS(getMap(), Camino.GetCaseIDFromDirrection(casterCell, dir, getMap(), true), cell.getId(), null, true)) {
                 if (player != null)
@@ -2563,6 +2614,23 @@ public class Pelea {
                 GestorSalida.GAME_SEND_Im_PACKET(player, "1174");
             return false;
         }
+
+        /*boolean bl = hasModification = player != null && player.getObjectsClassSpell().containsKey(spell.getSpellID());
+        if (caster.getType() == 1 && hasModification) {
+            boolean modif;
+            int modi4 = player.getValueOfClassObject(spell.getSpellID(), 289);
+            boolean bl2 = modif = modi4 == 1;
+            if (spell.hasLDV() && !Formulas.checkLos(this.getMap(), (short)casterCell, (short)cell.getId()) && !modif) {
+                GestorSalida.GAME_SEND_Im_PACKET(player, "1174");
+                return false;
+            }
+        }
+        if (!hasModification && spell.hasLDV() && !Formulas.checkLos(this.getMap(), (short)casterCell, (short)cell.getId())) {
+            if (player != null) {
+                GestorSalida.GAME_SEND_Im_PACKET(player, "1174");
+            }
+            return false;
+        }*/
 
         int dist = Camino.getDistanceBetween(getMap(), casterCell, cell.getId());
         int maxAlc = spell.getMaxPO();
@@ -2615,6 +2683,89 @@ public class Pelea {
             numLunchT += player.getValueOfClassObject(spell.getSpellID(), 291);
 
         return !(numLunchT - LanzarHechizo.getNbLaunchTarget(caster, t, spell.getSpellID()) <= 0 && numLunchT > 0);
+    }
+
+    public boolean canCastSpellMob(Peleador caster, Hechizo.SortStats spell, GameCase cell, int targetCell) {
+        int casterCell;
+        Peleador current = this.getFighterByOrdreJeu();
+        if (current == null || spell == null || current.getId() != caster.getId()) {
+            return false;
+        }
+        if (spell.getSpell().hasInvalidState(caster) || this.getCurFighterPa() < spell.getPACost() || cell == null) {
+            return false;
+        }
+        int n = casterCell = targetCell <= -1 ? caster.getCell().getId() : targetCell;
+        if (spell.isLineLaunch() && !Camino.casesAreInSameLine(this.getMap(), casterCell, cell.getId(), 'z', 70)) {
+            return false;
+        }
+        if (spell.hasLDV() /*&& !Formulas.checkLos(this.getMap(), (short)casterCell, (short)cell.getId())*/) {
+            return false;
+        }
+        int dist = Camino.getDistanceBetween(this.getMap(), casterCell, cell.getId());
+        int maxAlc = spell.getMaxPO();
+        int minAlc = spell.getMinPO();
+        if (spell.isModifPO() && (maxAlc += caster.getTotalStats().getEffect(117)) <= minAlc) {
+            maxAlc = minAlc + 1;
+        }
+        if (maxAlc < minAlc) {
+            maxAlc = minAlc;
+        }
+        if (dist < minAlc || dist > maxAlc) {
+            return false;
+        }
+        if (!LanzarHechizo.cooldownGood(caster, spell.getSpellID())) {
+            return false;
+        }
+        int numLunch = spell.getMaxLaunchbyTurn();
+        if (numLunch - LanzarHechizo.getNbLaunch(caster, spell.getSpellID()) <= 0 && numLunch > 0) {
+            return false;
+        }
+        if (!this.checkKrakenState(caster, spell)) {
+            return false;
+        }
+        Peleador t = cell.getFirstFighter();
+        int numLunchT = spell.getMaxLaunchByTarget();
+        return numLunchT - LanzarHechizo.getNbLaunchTarget(caster, t, spell.getSpellID()) > 0 || numLunchT <= 0;
+    }
+
+    private boolean checkKrakenState(Peleador caster, Hechizo.SortStats spell) {
+        switch (spell.getSpellID()) {
+            case 1106 -> {
+                return caster.haveState(31) && caster.haveState(32) && caster.haveState(33) && caster.haveState(34);
+            }
+            case 1097 -> {
+                return caster.haveState(31);
+            }
+            case 1098 -> {
+                return caster.haveState(32);
+            }
+            case 1099 -> {
+                return caster.haveState(33);
+            }
+        }
+        return true;
+    }
+
+    public boolean canLaunchSpell(Peleador caster, Hechizo.SortStats spell, GameCase cell) {
+        if (spell == null || spell.getSpell().hasInvalidState(caster) || !spell.getSpell().hasNeededState(caster)) {
+            return false;
+        }
+        if (this.getCurFighterPa() < spell.getPACost()) {
+            return false;
+        }
+        if (!LanzarHechizo.cooldownGood(caster, spell.getSpellID())) {
+            return false;
+        }
+        int numLunch = spell.getMaxLaunchbyTurn();
+        if (numLunch - LanzarHechizo.getNbLaunch(caster, spell.getSpellID()) <= 0 && numLunch > 0) {
+            return false;
+        }
+        if (cell == null) {
+            return true;
+        }
+        Peleador t = cell.getFirstFighter();
+        int numLunchT = spell.getMaxLaunchByTarget();
+        return numLunchT - LanzarHechizo.getNbLaunchTarget(caster, t, spell.getSpellID()) > 0 || numLunchT <= 0;
     }
 
     public boolean onFighterDeplace(Peleador fighter, AccionJuego GA) {
@@ -2684,11 +2835,9 @@ public class Pelea {
         // Si port�
         final Peleador po = current.getHoldedBy();
 
-        if(po!=null)
-        {
+        if(po!=null) {
             // si le joueur va bouger
-            if((short)nextCellID!=po.getCell().getId())
-            {
+            if((short)nextCellID!=po.getCell().getId()) {
                 // on retire les �tats
                 po.setState(Constantes.ETAT_PORTEUR,0,po.getId());
                 current.setState(Constantes.ETAT_PORTE,0,po.getId());
@@ -2715,14 +2864,12 @@ public class Pelea {
         // Si porteur
         final Peleador po2=current.getIsHolding();
 
-        if(po2!=null&&current.haveState(Constantes.ETAT_PORTEUR)&&po2.haveState(Constantes.ETAT_PORTE))
-        {
+        if(po2!=null&&current.haveState(Constantes.ETAT_PORTEUR)&&po2.haveState(Constantes.ETAT_PORTE)) {
             // on d�place le port� sur la case
             po2.setCell(current.getCell());
         }
 
-        if(fighter.getPlayer()==null)
-        {
+        if(fighter.getPlayer()==null) {
             try{
                 Thread.sleep((int)(400+(100*Math.sqrt(nStep))));
             } catch(final Exception ignored) {
@@ -3730,19 +3877,7 @@ public class Pelea {
         GestorSalida.GAME_SEND_GAMEACTION_TO_FIGHT(this, 7, this.getCurAction());
         GestorSalida.GAME_SEND_GAF_PACKET_TO_FIGHT(this, 7, 2, current.getId());
 
-        //final ArrayList<Trap> traps=new ArrayList<>(this.getAllTraps());
-        // final Fighter fighter=getFighterByPerso(player);
-        //final int currentCell=fighter.getCell().getId();
-
-        if(!current.getJustTrapped() && current.getFight() != null)
-        {
-      /*  for(Trap trap : traps)
-      {
-        if(PathFinding.getDistanceBetween(this.getMap(),trap.getCell().getId(),currentCell)<=trap.getSize())
-          trap.onTraped(fighter);
-        if(this.getState()==Constant.FIGHT_STATE_FINISHED)
-          break;
-      }*/
+        if(!current.getJustTrapped() && current.getFight() != null) {
             EfectoHechizo.VerificarTrampa(current.getFight(),current);
         }
 
