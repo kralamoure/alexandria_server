@@ -6,7 +6,7 @@ package org.alexandria.estaticos.area.mapa
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-interface CellCache {
+interface CeldaCache {
     fun isWalkable(var1: Short): Boolean
     fun getDirectWalkable(var1: Short): List<Short?>?
     fun isOutOfMap(var1: Short): Boolean

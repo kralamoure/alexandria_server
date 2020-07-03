@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class InteligenciaAbstracta implements Inteligencia {
 
-    private final ScheduledExecutorService executor;
+    private ScheduledExecutorService executor;
 
     protected Pelea fight;
     protected Peleador fighter;
@@ -23,13 +23,14 @@ public abstract class InteligenciaAbstracta implements Inteligencia {
         this.fight = fight;
         this.fighter = fighter;
         this.count = count;
-        this.executor = Executors.newSingleThreadScheduledExecutor(r -> {
+        this.executor = Executors.newScheduledThreadPool(1);
+        /*this.executor = Executors.newSingleThreadScheduledExecutor(r -> {
                     Thread thread = new Thread(r);
                     thread.setDaemon(true);
                     thread.setName(InteligenciaAbstracta.class.getName());
                     return thread;
                 }
-        );
+        );*/
     }
 
     public Pelea getFight() {
@@ -62,6 +63,7 @@ public abstract class InteligenciaAbstracta implements Inteligencia {
                             this.fight.endTurn(false, this.fighter);
                         }
                         , 250);
+
                 this.executor.shutdownNow();
             }
         } else if (!this.fight.isFinish()) {

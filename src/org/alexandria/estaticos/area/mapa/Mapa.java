@@ -133,7 +133,7 @@ public class Mapa {
     private boolean isMute = false;
     private SubArea subArea;
     private Cercados mountPark;
-    private CellCacheImpl cellCache;
+    private CeldaCacheImplementar cellCache;
     private List<GameCase> cases = new ArrayList<>();
     private List<Pelea> fights = new ArrayList<>();
     private ArrayList<Monstruos.MobGrade> mobPossibles = new ArrayList<>();
@@ -269,11 +269,11 @@ public class Mapa {
         this.fixSize = fixSize;
     }
 
-    public void setCellCache(CellCacheImpl cache) {
+    public void setCellCache(CeldaCacheImplementar cache) {
         this.cellCache = cache;
     }
 
-    public CellCacheImpl getCellCache() {
+    public CeldaCacheImplementar getCellCache() {
         return this.cellCache;
     }
 

@@ -1,6 +1,6 @@
 package org.alexandria.comunes;
 
-import org.alexandria.estaticos.area.mapa.CellCacheImpl;
+import org.alexandria.estaticos.area.mapa.CeldaCacheImplementar;
 import org.alexandria.estaticos.area.mapa.Mapa;
 import org.alexandria.estaticos.cliente.Jugador;
 import org.alexandria.configuracion.Configuracion;
@@ -1128,7 +1128,7 @@ public class Formulas {
         if (map == null || castID == targetID) {
             return true;
         }
-        CellCacheImpl cache = map.getCellCache();
+        CeldaCacheImplementar cache = map.getCellCache();
         if (cache == null) {
             return false;
         }

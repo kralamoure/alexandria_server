@@ -9,8 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Temporizador {
 
-    private static int numberOfThread = 10;
-    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(numberOfThread);
+    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(0);
 
     public static ScheduledFuture<?> addSiguiente(Runnable run, long time, TimeUnit unit) {
         return scheduler.schedule(Temporizador.catchRunnable(run), time, unit);

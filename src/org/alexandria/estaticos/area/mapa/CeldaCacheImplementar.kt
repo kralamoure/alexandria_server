@@ -5,8 +5,8 @@ import java.util.*
 import kotlin.math.floor
 import kotlin.math.roundToInt
 
-class CellCacheImpl(private val lineBlocker: List<Short>, private val width: Short, private val height: Short) :
-    CellCache {
+class CeldaCacheImplementar(private val lineBlocker: List<Short>, private val width: Short, private val height: Short) :
+    CeldaCache {
     private val orthogonalProjection: Int2IntArrayMap
     override fun isWalkable(cellId: Short): Boolean {
         return false
