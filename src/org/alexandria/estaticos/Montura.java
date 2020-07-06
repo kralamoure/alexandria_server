@@ -1145,6 +1145,10 @@ public class Montura {
 	}
 	
 	private String parseExp() {
+		//Si la montura tiene lvl 0 se le suma 1 para que no de errores nulos
+		if (this.level == 0)
+			this.level = this.level + 1;
+		//Una vez sumado, continuamos
 		return this.exp + "," + Mundo.mundo.getExpLevel(this.level).mount + "," + Mundo.mundo.getExpLevel(this.level + 1).mount;
 	}
 

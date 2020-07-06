@@ -9,3 +9,6 @@ v0.01.0
 - Nuevo sistema de manejo de thread y timmers
 - Kralamar gigante funcionando a la perfeccion
 - Hechizo Devoción desbugueado
+
+v0.01.1
+- Debug error lvl 0 en la creacion de monturas
