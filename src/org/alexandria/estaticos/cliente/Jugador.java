@@ -1725,9 +1725,9 @@ public class Jugador {
 
         if (this.getCurMap().getSubArea() != null) {
             if (this.getCurMap().getSubArea().getId() == 319 || this.getCurMap().getSubArea().getId() == 210)
-                Temporizador.addSiguiente(() -> Minotot.sendPacketMap(this), 3, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+                Temporizador.addSiguiente(() -> Minotot.sendPacketMap(this), 3, TimeUnit.SECONDS);
             else if (this.getCurMap().getSubArea().getId() == 200)
-                Temporizador.addSiguiente(() -> DragoCerdo.sendPacketMap(this), 3, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+                Temporizador.addSiguiente(() -> DragoCerdo.sendPacketMap(this), 3, TimeUnit.SECONDS);
         }
         if (this.getEnergy() == 0) this.setGhost();
     }
@@ -5338,7 +5338,7 @@ public class Jugador {
             Database.dinamicos.getPlayerData().update(getAccount().getCurrentPlayer());
             GestorSalida.GAME_SEND_EV_PACKET(getGameClient());
             setAway(false);
-        }, 5, TimeUnit.MINUTES, Temporizador.DataType.CLIENTE);
+        }, 5, TimeUnit.MINUTES);
     }
 
     public long getTimeTaverne() {

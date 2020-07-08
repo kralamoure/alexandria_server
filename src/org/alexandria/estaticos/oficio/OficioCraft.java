@@ -18,10 +18,10 @@ public class OficioCraft {
 
         Temporizador.addSiguiente(() -> {
             if (itsOk) jobAction.craft(false);
-        }, Configuracion.INSTANCE.getOficiosDelay(), TimeUnit.MILLISECONDS, Temporizador.DataType.MAPA);
+        }, Configuracion.INSTANCE.getOficiosDelay(), TimeUnit.MILLISECONDS);
         Temporizador.addSiguiente(() -> {
             if (!itsOk) repeat(time, time, player);
-        }, Configuracion.INSTANCE.getOficiosDelay(), TimeUnit.MILLISECONDS, Temporizador.DataType.MAPA);
+        }, Configuracion.INSTANCE.getOficiosDelay(), TimeUnit.MILLISECONDS);
     }
 
     public OficioAccion getJobAction() {
@@ -42,7 +42,7 @@ public class OficioCraft {
         if (!this.check(player, j, time2) || time2 <= 0) {
             this.end();
         } else {
-            Temporizador.addSiguiente(() -> this.repeat(time1, (time2 - 1), player), Configuracion.INSTANCE.getOficiosDelay(), TimeUnit.MILLISECONDS, Temporizador.DataType.MAPA);
+            Temporizador.addSiguiente(() -> this.repeat(time1, (time2 - 1), player), Configuracion.INSTANCE.getOficiosDelay(), TimeUnit.MILLISECONDS);
         }
     }
 

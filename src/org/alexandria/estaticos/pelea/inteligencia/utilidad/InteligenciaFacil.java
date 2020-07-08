@@ -49,7 +49,7 @@ extends InteligenciaAbstracta {
                 this.stop = true;
                 this.time = 1000;
             }
-            this.addNext(this::decrementCount, Integer.valueOf(this.time));
+            this.addNext(this::decrementCount, (int) this.time);
         } else {
             this.stop = true;
             this.time = 500;
@@ -62,38 +62,39 @@ extends InteligenciaAbstracta {
         ArrayList<Hechizo.SortStats> spells = new ArrayList<Hechizo.SortStats>();
         for (Hechizo.SortStats spell : fighter.getMob().getSpells().values()) {
             if (spells.contains(spell)) continue;
-            block9 : switch (type) {
-                case "ATTACK": {
+            block9 :
+            switch (type) {
+                case "ATTACK" -> {
                     if (spell.getSpell().getType() != 0) break;
                     spells.add(spell);
                     break;
                 }
-                case "FRIEND-BUFF": {
+                case "FRIEND-BUFF" -> {
                     if (spell.getSpell().getType() != 1) break;
                     spells.add(spell);
                     break;
                 }
-                case "ENEMY-BUFF": {
+                case "ENEMY-BUFF" -> {
                     if (spell.getSpell().getType() != 2) break;
                     spells.add(spell);
                     break;
                 }
-                case "HEAL": {
+                case "HEAL" -> {
                     if (spell.getSpell().getType() != 3) break;
                     spells.add(spell);
                     break;
                 }
-                case "TP": {
+                case "TP" -> {
                     if (spell.getSpell().getType() != 4) break;
                     spells.add(spell);
                     break;
                 }
-                case "TRAP": {
+                case "TRAP" -> {
                     if (spell.getSpell().getType() != 5) break;
                     spells.add(spell);
                     break;
                 }
-                case "INVOCATION": {
+                case "INVOCATION" -> {
                     for (EfectoHechizo effect : spell.getEffects()) {
                         if (effect.getEffectID() != 181) continue;
                         spells.add(spell);

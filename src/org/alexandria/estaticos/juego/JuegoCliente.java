@@ -1013,7 +1013,7 @@ public class JuegoCliente {
             Temporizador.addSiguiente(() -> {
                 fight.joinPrismFight(this.player, (fight.getInit0().isPrisme() ? fight.getInit0() : fight.getInit1()).getTeam());
                 Mundo.mundo.getOnlinePlayers().stream().filter(Objects::nonNull).filter(player -> player.get_align() == player.get_align()).forEach(Prisma::parseDefense);
-            }, 2, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+            }, 2, TimeUnit.SECONDS);
         }
     }
     // Fin paketes de conquista
@@ -1052,7 +1052,7 @@ public class JuegoCliente {
 
         if(party != null && this.player.getPelea() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
             Temporizador.addSiguiente(() -> party.getPlayers().stream().filter((follower1) -> party.isWithTheMaster(follower1, false))
-                    .forEach(follower -> follower.getGameClient().parseDialogPacket(packet)), 0, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+                    .forEach(follower -> follower.getGameClient().parseDialogPacket(packet)), 0, TimeUnit.SECONDS);
         }
     }
 
@@ -2519,7 +2519,7 @@ public class JuegoCliente {
             this.ready();
             breakingObject.setObjetos(objects);
             this.recursiveBreakingObject(breakingObject, i + 1, count);
-        }, 1000, TimeUnit.MILLISECONDS, Temporizador.DataType.CLIENTE);
+        }, 1000, TimeUnit.MILLISECONDS);
     }
 
     private synchronized void movementItemOrKamasDons(String packet) {
@@ -3666,7 +3666,7 @@ public class JuegoCliente {
                                 if(follower.getCurCell().getId() != oldCase.getId())
                                     follower.teleport(follower.getCurMap().getId(), oldCase.getId());
                                 follower.getGameClient().sendActions(packet);
-                            }), 0, TimeUnit.MILLISECONDS, Temporizador.DataType.CLIENTE);
+                            }), 0, TimeUnit.MILLISECONDS);
                 }
                 break;
 
@@ -4359,7 +4359,7 @@ public class JuegoCliente {
                     if(party != null && this.player.getPelea() == null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
                         Temporizador.addSiguiente(() -> party.getPlayers().stream()
                                 .filter((follower1) -> party.isWithTheMaster(follower1, false))
-                                .forEach(follower -> follower.getGameClient().actionAck(packet)), 0, TimeUnit.MILLISECONDS, Temporizador.DataType.CLIENTE);
+                                .forEach(follower -> follower.getGameClient().actionAck(packet)), 0, TimeUnit.MILLISECONDS);
                     }
                     //Si le joueur s'arrete sur une case
                     int newCellID = -1;
@@ -4454,7 +4454,7 @@ public class JuegoCliente {
         if(party != null && party.getMaster() != null && party.getMaster().getName().equals(this.player.getName())) {
             Temporizador.addSiguiente(() -> party.getPlayers().stream()
                     .filter(follower -> party.isWithTheMaster(follower, true))
-                    .forEach(follower -> follower.getGameClient().readyFight(packet)), 1, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+                    .forEach(follower -> follower.getGameClient().readyFight(packet)), 1, TimeUnit.SECONDS);
         }
     }
     //Fin paketes de juego

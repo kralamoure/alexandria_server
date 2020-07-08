@@ -1002,7 +1002,7 @@ public class Pelea {
                 if (this.getState() != Constantes.FIGHT_STATE_ACTIVE)
                     this.startFight();
             }
-        }, time, TimeUnit.SECONDS, Temporizador.DataType.PELEA);
+        }, time, TimeUnit.SECONDS);
     }
 
     private void demorph(Jugador p) {
@@ -3847,7 +3847,7 @@ public class Pelea {
                             Temporizador.addSiguiente(() -> {
                                 Minotot.sendPacketMap(player); // Retarde le paquet sinon les portes sont ferm�s. Le paquet de GameInformation doit faire chier ce p�d�
                                 player.setPdv(1);
-                            }, 3500, Temporizador.DataType.CLIENTE);
+                            }, 3500);
                         } else {
                             player.setNeededEndFightAction(new Accion(1001, player.getSavePosition(), "", null));
                             player.setPdv(1);
@@ -5304,7 +5304,7 @@ public class Pelea {
         public Turno(Pelea pelea, Peleador peleador) {
             this.pelea = pelea;
             this.peleador = peleador;
-            Temporizador.addSiguiente(this, Constantes.TIEMPO_DE_TURNO + 2000, TimeUnit.MILLISECONDS, Temporizador.DataType.PELEA);
+            Temporizador.addSiguiente(this, Constantes.TIEMPO_DE_TURNO + 2000, TimeUnit.MILLISECONDS);
             this.inicio = Instant.now().toEpochMilli();
         }
 

@@ -12,3 +12,6 @@ v0.01.0
 
 v0.01.1
 - Debug error lvl 0 en la creacion de monturas
+- Hechizo árbol del sadida desbugueado
+- Mejoras varias en el multi
+- Mejoras en el manejo de threads del emulador

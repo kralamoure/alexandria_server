@@ -1836,7 +1836,7 @@ public class Mundo {
         Temporizador.addSiguiente(() -> Mundo.mundo.getOnlinePlayers().stream()
                         .filter(player -> player != null && player.getGameClient() != null && player.isOnline())
                         .forEach(player -> player.sendMessage(message)),
-                0, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+                0, TimeUnit.SECONDS);
     }
 
     public static class Drop {

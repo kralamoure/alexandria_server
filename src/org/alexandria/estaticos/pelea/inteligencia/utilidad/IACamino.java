@@ -32,12 +32,12 @@ public class IACamino {
         while (!openList.isEmpty() && (!closeList.containsKey(getCellEnd()))) {
             char[] dirs = {'b', 'd', 'f', 'h'};
             Node nodeCurrent = bestNode();
-            if (nodeCurrent.getCellId() == getCellEnd()
-                    && !Camino.cellArroundCaseIDisOccuped(getFight(), nodeCurrent.getCellId()))
+            if (nodeCurrent.cellId == getCellEnd()
+                    && !Camino.cellArroundCaseIDisOccuped(getFight(), nodeCurrent.cellId))
                 return getPath();
             addListClose(nodeCurrent);
             for (int loc0 = 0; loc0 < 4; loc0++) {
-                int cell = Camino.getCaseIDFromDirrection(nodeCurrent.getCellId(), dirs[loc0], getMap());
+                int cell = Camino.getCaseIDFromDirrection(nodeCurrent.cellId, dirs[loc0], getMap());
                 Node node = new Node(cell, nodeCurrent);
                 if (getMap().getCase(cell) == null)
                     continue;
@@ -50,24 +50,24 @@ public class IACamino {
                 if (closeList.containsKey(cell))
                     continue;
                 if (openList.containsKey(cell)) {
-                    if (openList.get(cell).getCountG() > getCostG(node)) {
+                    if (openList.get(cell).countG > getCostG(node)) {
                         nodeCurrent.setChild(openList.get(cell));
-                        openList.get(cell).setParent(nodeCurrent);
-                        openList.get(cell).setCountG(getCostG(node));
-                        openList.get(cell).setHeristic(Camino.getDistanceBetween(getMap(), cell, getCellEnd()) * 10);
-                        openList.get(cell).setCountF(openList.get(cell).getCountG()
-                                + openList.get(cell).getHeristic());
+                        openList.get(cell).parent = nodeCurrent;
+                        openList.get(cell).countG = getCostG(node);
+                        openList.get(cell).heristic = Camino.getDistanceBetween(getMap(), cell, getCellEnd()) * 10;
+                        openList.get(cell).countF = openList.get(cell).countG
+                                + openList.get(cell).heristic;
                     }
                 } else {
                     if (value == 0)
                         if (Camino.casesAreInSameLine(getMap(), cell, getCellEnd(), dirs[loc0], 70))
-                            node.setCountF((node.getCountG() + node.getHeristic()) - 10);
+                            node.countF = (node.countG + node.heristic) - 10;
                     openList.put(cell, node);
                     nodeCurrent.setChild(node);
-                    node.setParent(nodeCurrent);
-                    node.setCountG(getCostG(node));
-                    node.setHeristic(Camino.getDistanceBetween(getMap(), cell, getCellEnd()) * 10);
-                    node.setCountF(node.getCountG() + node.getHeristic());
+                    node.parent = nodeCurrent;
+                    node.countG = getCostG(node);
+                    node.heristic = Camino.getDistanceBetween(getMap(), cell, getCellEnd()) * 10;
+                    node.countF = node.countG + node.heristic;
                 }
             }
         }
@@ -80,11 +80,11 @@ public class IACamino {
             return null;
         ArrayList<GameCase> path = new ArrayList<>();
         java.util.Map<Integer, GameCase> path0 = new HashMap<>();
-        for (int index = closeList.size(); current.getCellId() != getCellStart(); index--) {
-            if (current.getCellId() == getCellStart())
+        for (int index = closeList.size(); current.cellId != getCellStart(); index--) {
+            if (current.cellId == getCellStart())
                 continue;
-            path0.put(index, getMap().getCase(current.getCellId()));
-            current = current.getParent();
+            path0.put(index, getMap().getCase(current.cellId));
+            current = current.parent;
 
         }
         int index = -1;
@@ -109,8 +109,8 @@ public class IACamino {
         int bestCountF = 150000;
         Node bestNode = null;
         for (Node node : openList.values()) {
-            if (node.getCountF() < bestCountF) {
-                bestCountF = node.getCountF();
+            if (node.countF < bestCountF) {
+                bestCountF = node.countF;
                 bestNode = node;
             }
         }
@@ -118,15 +118,15 @@ public class IACamino {
     }
 
     private void addListClose(Node node) {
-        openList.remove(node.getCellId());
-        if (!closeList.containsKey(node.getCellId()))
-            closeList.put(node.getCellId(), node);
+        openList.remove(node.cellId);
+        if (!closeList.containsKey(node.cellId))
+            closeList.put(node.cellId, node);
     }
 
     private int getCostG(Node node) {
         int costG = 0;
-        while (node.getCellId() == getCellStart()) {
-            node = node.getParent();
+        while (node.cellId == getCellStart()) {
+            node = node.parent;
             costG += 10;
         }
         return costG;

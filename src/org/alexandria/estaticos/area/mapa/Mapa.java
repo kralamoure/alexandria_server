@@ -90,7 +90,7 @@ public class Mapa {
                         }
                     }
                     Mundo.mundo.getCollectors().values().forEach(Recaudador::moveOnMap);
-                }, 0, TimeUnit.SECONDS, Temporizador.DataType.MAPA);
+                }, 0, TimeUnit.SECONDS);
                     NpcMobil.moveAll();
 
                 for(Jugador jugador : Mundo.mundo.getOnlinePlayers())
@@ -1209,7 +1209,7 @@ public class Mapa {
                     fight.joinPrismFight(follower,(fight.getTeam0().containsKey(player.getId()) ? 0 : 1));
                 else
                     fight.joinFight(follower,player.getId());
-            }), 1, TimeUnit.SECONDS, Temporizador.DataType.CLIENTE);
+            }), 1, TimeUnit.SECONDS);
         }
     }
 
@@ -3287,7 +3287,7 @@ public class Mapa {
 
             if(ok) {
                 this.open();
-                Temporizador.addSiguiente(this::close, this.time, TimeUnit.SECONDS, Temporizador.DataType.MAPA);
+                Temporizador.addSiguiente(this::close, this.time, TimeUnit.SECONDS);
             }
             return ok;
         }

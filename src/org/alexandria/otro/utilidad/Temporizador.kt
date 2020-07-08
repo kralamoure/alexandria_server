@@ -1,66 +1,56 @@
-package org.alexandria.otro.utilidad;
+package org.alexandria.otro.utilidad
 
-import org.alexandria.estaticos.juego.mundo.Mundo;
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+object Temporizador {
+    private var tf: ThreadFactory = DaemonFactory()
+    private val executor = Executors.newSingleThreadScheduledExecutor(tf)
 
-public class Temporizador {
-
-    private static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(0);
-
-    public static ScheduledFuture<?> addSiguiente(Runnable run, long time, TimeUnit unit) {
-        return scheduler.schedule(Temporizador.catchRunnable(run), time, unit);
+    @JvmStatic
+    fun addSiguiente(run: Runnable, time: Long, unit: TimeUnit): ScheduledFuture<*> {
+        return executor.schedule(catchRunnable(run), time, unit)
     }
 
-    public static ScheduledFuture<?> addSiguiente(Runnable run, long time) {
-        return Temporizador.addSiguiente(run, time, TimeUnit.MILLISECONDS);
+    @JvmStatic
+    fun addSiguiente(run: Runnable, time: Long): ScheduledFuture<*> {
+        return addSiguiente(run, time, TimeUnit.MILLISECONDS)
     }
 
-    public static void addSiguiente(Runnable run, long time, TimeUnit unit, DataType scheduler) {
-        Temporizador.scheduler.schedule(run, time, unit);
+    @JvmStatic
+    fun addSiguiente(run: Runnable, time: Long, unit: TimeUnit, scheduler: DataType?) {
+        executor.schedule(run, time, unit)
     }
 
-    public static void addSiguiente(Runnable run, long time, DataType scheduler) {
-        Temporizador.addSiguiente(run, time, TimeUnit.MILLISECONDS, scheduler);
+    @JvmStatic
+    fun addSiguiente(run: Runnable, time: Long, scheduler: DataType?) {
+        addSiguiente(run, time, TimeUnit.MILLISECONDS, scheduler)
     }
 
-    public static void update() { }
-
-    private static int getNumberOfThread() {
-        int fight = Temporizador.getNumberOfFight();
-        int player = Mundo.mundo.getOnlinePlayers().size();
-        return (fight + player) / 30;
-    }
-
-    private static int getNumberOfFight() {
-        int[] fights = new int[]{0};
-        Mundo.mundo.getMapa().forEach(map -> {
-                    int[] arrn = fights;
-                    arrn[0] = arrn[0] + map.getFights().size();
-                }
-        );
-        return fights[0];
-    }
-
-    public static Runnable catchRunnable(Runnable run) {
-        return () -> {
+    fun update() {}
+    @JvmStatic
+    fun catchRunnable(run: Runnable): Runnable {
+        return Runnable {
             try {
-                run.run();
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-                System.err.println(e.getCause().getMessage());
+                run.run()
+            } catch (e: Exception) {
+                e.printStackTrace()
+                System.err.println(e.cause!!.message)
             }
         }
-                ;
     }
 
-    public enum DataType {
-        MAPA,
-        CLIENTE,
-        PELEA
+    internal class DaemonFactory : ThreadFactory {
+        override fun newThread(r: Runnable): Thread {
+            val t = Thread(r)
+            t.isDaemon = true
+            return t
+        }
+    }
+
+    enum class DataType {
+        MAPA, CLIENTE, PELEA
     }
 }

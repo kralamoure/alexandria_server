@@ -11,7 +11,17 @@ import java.util.concurrent.TimeUnit;
 
 public abstract class InteligenciaAbstracta implements Inteligencia {
 
-    private ScheduledExecutorService executor;
+    static class DaemonFactory implements ThreadFactory {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        }
+    }
+
+    ThreadFactory tf = new DaemonFactory();
+    private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(tf);
 
     protected Pelea fight;
     protected Peleador fighter;
@@ -23,14 +33,6 @@ public abstract class InteligenciaAbstracta implements Inteligencia {
         this.fight = fight;
         this.fighter = fighter;
         this.count = count;
-        this.executor = Executors.newScheduledThreadPool(1);
-        /*this.executor = Executors.newSingleThreadScheduledExecutor(r -> {
-                    Thread thread = new Thread(r);
-                    thread.setDaemon(true);
-                    thread.setName(InteligenciaAbstracta.class.getName());
-                    return thread;
-                }
-        );*/
     }
 
     public Pelea getFight() {
