@@ -278,7 +278,7 @@ public class Accion {
                 }
                 break;
 
-            case 0://T�l�portation
+            case 0://Teletransportar
                 try {
                     short newMapID = Short.parseShort(args.split(",", 2)[0]);
                     int newCellID = Integer.parseInt(args.split(",", 2)[1]);

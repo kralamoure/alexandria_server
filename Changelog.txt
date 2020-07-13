@@ -15,3 +15,6 @@ v0.01.1
 - Hechizo árbol del sadida desbugueado
 - Mejoras varias en el multi
 - Mejoras en el manejo de threads del emulador
+
+v0.01.2
+- Agregado NPC Guardían del puente de la muerte + dialogo básico
